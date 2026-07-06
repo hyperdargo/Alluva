@@ -28,14 +28,14 @@ const state = {
     theme: 'system',
     player: 'torrserver',
     autoplay: false,
-    selectedIndexers: [2, 4, 5, 7, 8, 9, 11],
+    selectedIndexers: [2, 4, 5, 11],
     vlcPath: '', // Custom VLC path
     vlcArgs: '', // Custom VLC arguments
     mpvPath: '', // Custom MPV path
     mpvArgs: '' // Custom MPV arguments
   },
   continueWatching: [],
-  torrserverUrl: 'http://127.0.0.1:8090',
+  torrserverUrl: 'https://torrserver.ankitgupta.com.np',
   lastTorrentQuery: null,
   lastTorrentCategory: null,
   lastTorrentEpisode: null,
@@ -293,7 +293,7 @@ function loadPreferences() {
 
   const activeIds = Object.keys(INDEXERS).map(id => parseInt(id));
   if (!state.preferences.selectedIndexers || state.preferences.selectedIndexers.length === 0) {
-    state.preferences.selectedIndexers = activeIds.length > 0 ? activeIds : [2, 4, 5, 7, 8, 9, 11];
+    state.preferences.selectedIndexers = [2, 4, 5, 11]; // Direct scrapers by default. Prowlarr as second option.
   }
 
   if (localStorage.getItem('sv_player_migrated') !== 'torrserver_v3') {
@@ -2252,7 +2252,7 @@ async function resolveWebTorrentAndPlay(magnet, playerType, title, trackingInfo 
       throw new Error('No video files found in torrent');
     }
 
-    const streamUrl = `http://127.0.0.1:3000/api/webtorrent/stream?magnet=${encodeURIComponent(magnet)}&fileId=${videoFile.id}`;
+    const streamUrl = `https://torrserver.ankitgupta.com.np/api/webtorrent/stream?magnet=${encodeURIComponent(magnet)}&fileId=${videoFile.id}`;
     setLoading(false);
 
     // Dispatch event to allow browser extension companion to capture it
@@ -2415,7 +2415,7 @@ async function playTorrent(title, magnet, trackingInfo = {}) {
   }
 
   if (playerMode === 'vlc_webtorrent') {
-    const streamUrl = `http://127.0.0.1:3000/api/webtorrent/stream?magnet=${encodeURIComponent(magnet)}`;
+    const streamUrl = `https://torrserver.ankitgupta.com.np/api/webtorrent/stream?magnet=${encodeURIComponent(magnet)}`;
     openInLocalPlayer('vlc', streamUrl, title);
     return;
   }
@@ -2426,7 +2426,7 @@ async function playTorrent(title, magnet, trackingInfo = {}) {
   }
 
   if (playerMode === 'mpv_webtorrent') {
-    const streamUrl = `http://127.0.0.1:3000/api/webtorrent/stream?magnet=${encodeURIComponent(magnet)}`;
+    const streamUrl = `https://torrserver.ankitgupta.com.np/api/webtorrent/stream?magnet=${encodeURIComponent(magnet)}`;
     openInLocalPlayer('mpv', streamUrl, title);
     return;
   }
