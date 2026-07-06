@@ -42,7 +42,7 @@ To allow the extension to launch native video players (like VLC) directly from y
 
 ## Step 4: Configure Stream Vault Settings
 
-1. Open the Stream Vault web app (`https://moviewatch.ankitgupta.com.np`).
+1. Open the Stream Vault web app (e.g., `http://localhost:3000` or your custom domain).
 2. Go to the **Settings** view from the sidebar.
 3. Under the **Playback** section, ensure your **Default Player** is set to use VLC or MPV via Local WebTorrent.
 4. Under **External Players**, specify the custom path to your VLC or MPV executable if it is not in your system's default PATH (e.g., `C:\Program Files\VideoLAN\VLC\vlc.exe`).

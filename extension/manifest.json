@@ -11,9 +11,7 @@
     "contextMenus"
   ],
   "host_permissions": [
-    "https://moviewatch.ankitgupta.com.np/*",
-    "http://localhost:3000/*",
-    "http://127.0.0.1:3000/*"
+    "*://*/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -28,9 +26,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://moviewatch.ankitgupta.com.np/*",
-        "http://localhost:3000/*",
-        "http://127.0.0.1:3000/*"
+        "<all_urls>"
       ],
       "js": ["content.js"]
     }

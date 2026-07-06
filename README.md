@@ -27,6 +27,16 @@
 
 ---
 
+## ✨ What's New in v1.0.3?
+
+- **Direct Scrapers Priority**: Refined the search engine to prioritize lightning-fast direct scrapers (The Pirate Bay, Nyaa, YTS, EZTV) by default, completely decoupling search performance from slow or failing indexers.
+- **Strict Scraper Timeouts**: Introduced a hard 5-second maximum timeout on the Server-Sent Events (SSE) stream, ensuring the search UI never hangs indefinitely due to blocked indexers (like FlareSolverr timeouts).
+- **VLC Extension Fix**: Completely removed the legacy hardcoded relay endpoint from the browser extension, allowing direct playback of native TorrServer HTTPS streams in VLC without input errors.
+- **Improved Extension Guide UI**: Overhauled the homepage informational banner to be a sleek, dismissible styled card with beautiful typography.
+- **Multilingual Support**: Added a built-in translation dropdown to the homepage banner, supporting English, Nepali, Hindi, Italian, Japanese, Chinese, and Russian.
+
+---
+
 ## ✨ What's New in v1.0.2?
 
 - **Prowlarr Integration (Major Update)**: The entire scraping backend has been overhauled to sync natively with your Prowlarr instance. This completely eliminates Cloudflare `Turnstile` timeouts (which blocked 1337x, EZTV, and Ext.to on older FlareSolverr setups) by offloading the proxy/captcha handling directly to Prowlarr!

@@ -71,9 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
       : stream.url;
 
     // Wrap HTTPS links in the local HTTP relay to bypass VLC GnuTLS SSL blocks
-    if (rawUrl.startsWith('https://')) {
-      rawUrl = `https://moviewatch.ankitgupta.com.np/api/relay?url=${encodeURIComponent(rawUrl)}`;
-    }
+    // Removed because VLC handles torrserver HTTPS links directly fine, and hardcoded moviewatch fails.
 
     const m3uContent = `#EXTM3U\n#EXTINF:-1,${stream.title}\n${rawUrl}\n`;
     
