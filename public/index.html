@@ -12,6 +12,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -536,7 +537,7 @@
                 </button>
               </div>
               <div class="player-container">
-                <video class="video-player" id="videoPlayer" controls playsinline crossorigin="anonymous">
+                <video class="video-player" id="videoPlayer" playsinline crossorigin="anonymous">
                   <!-- Subtitles will be injected here -->
                 </video>
                 <div class="player-actions" id="playerActions"></div>
@@ -609,7 +610,7 @@
     </main>
   </div>
 
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <script src="app.js"></script>
 </body>
-
 </html>

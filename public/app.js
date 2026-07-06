@@ -41,7 +41,8 @@ const state = {
   lastTorrentEpisode: null,
   lastTorrentSeason: null,
   vlcExtensionId: 'ihpiinojhnfhpdmmacgmpoonphhimkaj', // Open in VLC extension ID
-  sortWebRipFirst: false
+  sortWebRipFirst: false,
+  plyrInstance: null
 };
 
 // ==========================================================================
@@ -2589,6 +2590,12 @@ function openVideoPlayer(title, url, trackingInfo = {}) {
             if (video.textTracks && video.textTracks.length > 0) {
               video.textTracks[video.textTracks.length - 1].mode = 'showing';
             }
+            if (state.plyrInstance) {
+              setTimeout(() => {
+                state.plyrInstance.captions.currentTrack = 0;
+                state.plyrInstance.captions.active = true;
+              }, 200);
+            }
             showToast('Auto-loaded English subtitles', 'info');
           }
         }
@@ -3088,6 +3095,15 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPreferences();
   });
 
+  // Initialize Plyr
+  const videoEl = document.getElementById('videoPlayer');
+  if (videoEl && typeof Plyr !== 'undefined') {
+    state.plyrInstance = new Plyr(videoEl, {
+      captions: { active: true, update: true, language: 'auto' },
+      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen']
+    });
+  }
+
   // Initialize
   initNavigation();
   initSearch();
@@ -3148,6 +3164,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Force track to show
         if (video.textTracks && video.textTracks.length > 0) {
           video.textTracks[video.textTracks.length - 1].mode = 'showing';
+        }
+        
+        if (state.plyrInstance) {
+          setTimeout(() => {
+            state.plyrInstance.captions.currentTrack = 0;
+            state.plyrInstance.captions.active = true;
+          }, 200);
         }
 
         showToast(`Loaded subtitle: ${file.name}`, 'success');
