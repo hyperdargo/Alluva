@@ -1,5 +1,4 @@
-# 🎬 Stream Vault v1.0.2
-
+# 🎬 Stream Vault
 > Your Personal Media Hub for Anime, Movies & TV Shows
 
 <div align="center">
