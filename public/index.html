@@ -116,6 +116,96 @@
             <!-- Populated dynamically by app.js -->
           </div>
 
+          <div class="extension-notice-banner" style="background: linear-gradient(135deg, rgba(230, 57, 70, 0.1) 0%, rgba(29, 53, 87, 0.2) 100%); border: 1px solid rgba(230, 57, 70, 0.2); border-radius: 12px; padding: 20px; margin: 24px 32px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <h3 style="margin: 0; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.4rem;">🎬</span> <span id="bannerTitle">For the Best Experience, Use VLC!</span>
+              </h3>
+              <select id="bannerLangSelect" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                <option value="en" style="color: #000;">🇬🇧 English</option>
+                <option value="np" style="color: #000;">🇳🇵 Nepali</option>
+                <option value="hi" style="color: #000;">🇮🇳 Hindi</option>
+                <option value="it" style="color: #000;">🇮🇹 Italian</option>
+                <option value="ja" style="color: #000;">🇯🇵 Japanese</option>
+                <option value="zh" style="color: #000;">🇨🇳 Chinese</option>
+                <option value="ru" style="color: #000;">🇷🇺 Russian</option>
+              </select>
+            </div>
+            
+            <p id="bannerDesc1" style="margin: 0; color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">
+              Some videos may fail or stutter in the web browser. We highly recommend installing our extension to play videos directly in VLC Media Player (which plays everything flawlessly!).
+            </p>
+            
+            <div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border: 1px solid rgba(255,255,255,0.05);">
+              <div style="color: #94a3b8; font-size: 0.9rem;">
+                <span id="bannerDesc2">Download the extension and follow the video guide here:</span><br>
+                <a href="https://filemanager.ankitgupta.com.np/files/Extention/" target="_blank" style="color: #60a5fa; text-decoration: none; font-weight: 500; font-size: 1rem; display: inline-block; margin-top: 6px; transition: color 0.2s;" onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='#60a5fa'">https://filemanager.ankitgupta.com.np/files/Extention/</a>
+              </div>
+              <div style="background: rgba(255,255,255,0.08); padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; color: #fff; font-family: monospace; border: 1px solid rgba(255,255,255,0.1);">
+                ID: <span style="color: #4ade80;">demo</span> <span style="opacity:0.5; margin: 0 8px;">|</span> Pass: <span style="color: #4ade80;">demodemodemo</span>
+              </div>
+            </div>
+            
+            <p id="bannerDesc3" style="margin: 0; color: #64748b; font-size: 0.85rem; font-style: italic;">
+              Note: Videos stream directly over the internet. They are not downloaded to your PC, so it may take a few seconds to buffer before playing.
+            </p>
+          </div>
+          
+          <script>
+            const translations = {
+              en: {
+                title: "For the Best Experience, Use VLC!",
+                desc1: "Some videos may fail or stutter in the web browser. We highly recommend installing our extension to play videos directly in VLC Media Player (which plays everything flawlessly!).",
+                desc2: "Download the extension and follow the video guide here:",
+                desc3: "Note: Videos stream directly over the internet. They are not downloaded to your PC, so it may take a few seconds to buffer before playing."
+              },
+              np: {
+                title: "उत्कृष्ट अनुभवको लागि, VLC प्रयोग गर्नुहोस्!",
+                desc1: "केही भिडियोहरू वेब ब्राउजरमा चल्न नसक्ने वा अड्किने हुन सक्छन्। हामी तपाइँलाई VLC मिडिया प्लेयरमा सिधै भिडियोहरू प्ले गर्न हाम्रो एक्सटेन्सन स्थापना गर्न सिफारिस गर्छौं (जसले सबै कुरा सहज रूपमा प्ले गर्छ!)।",
+                desc2: "एक्सटेन्सन डाउनलोड गर्नुहोस् र यहाँ भिडियो गाइड पछ्याउनुहोस्:",
+                desc3: "नोट: भिडियोहरू सिधै इन्टरनेटमा स्ट्रिम हुन्छन्। तिनीहरू तपाईंको पीसीमा डाउनलोड हुँदैनन्, त्यसैले प्ले गर्नु अघि बफर हुन केही सेकेन्ड लाग्न सक्छ।"
+              },
+              hi: {
+                title: "बेहतरीन अनुभव के लिए, VLC का उपयोग करें!",
+                desc1: "कुछ वीडियो वेब ब्राउज़र में चलने में विफल हो सकते हैं। हम अनुशंसा करते हैं कि आप वीडियो को सीधे VLC मीडिया प्लेयर में चलाने के लिए हमारा एक्सटेंशन इंस्टॉल करें (जो सब कुछ चलाता है!)।",
+                desc2: "एक्सटेंशन डाउनलोड करें और यहाँ वीडियो गाइड का पालन करें:",
+                desc3: "नोट: वीडियो सीधे इंटरनेट पर स्ट्रीम होते हैं। वे आपके पीसी में डाउनलोड नहीं होते हैं, इसलिए चलने से पहले बफर होने में कुछ सेकंड लग सकते हैं।"
+              },
+              it: {
+                title: "Per la migliore esperienza, usa VLC!",
+                desc1: "Alcuni video potrebbero bloccarsi nel browser. Consigliamo di installare la nostra estensione per riprodurre i video direttamente su VLC Media Player (che legge tutto senza problemi!).",
+                desc2: "Scarica l'estensione e segui la video guida qui:",
+                desc3: "Nota: i video vengono trasmessi direttamente via internet. Non vengono scaricati sul PC, quindi potrebbe volerci qualche secondo di caricamento prima dell'inizio."
+              },
+              ja: {
+                title: "最高のエクスペリエンスを得るには、VLCを使用してください！",
+                desc1: "Webブラウザでは一部のビデオが再生できなかったり、途切れたりする場合があります。すべてのビデオをスムーズに再生できるVLCメディアプレーヤーで直接再生するために、拡張機能をインストールすることを強くお勧めします。",
+                desc2: "拡張機能をダウンロードし、こちらのビデオガイドに従ってください:",
+                desc3: "注：ビデオはインターネット経由で直接ストリーミングされます。PCにはダウンロードされないため、再生が始まるまでに数秒のバッファリングが必要になる場合があります。"
+              },
+              zh: {
+                title: "为了获得最佳体验，请使用VLC！",
+                desc1: "有些视频可能无法在网络浏览器中正常播放。我们强烈建议安装我们的扩展程序，直接在VLC媒体播放器（可完美播放所有内容！）中播放视频。",
+                desc2: "在此处下载扩展程序并按照视频指南操作：",
+                desc3: "注：视频是直接通过互联网传输的。它们不会下载到您的电脑上，因此在播放前可能需要几秒钟的缓冲时间。"
+              },
+              ru: {
+                title: "Для лучшего качества используйте VLC!",
+                desc1: "Некоторые видео могут не воспроизводиться в браузере. Мы настоятельно рекомендуем установить наше расширение для просмотра видео напрямую через VLC Media Player (который воспроизводит всё без проблем!).",
+                desc2: "Скачайте расширение и следуйте видеоинструкции здесь:",
+                desc3: "Примечание: видео транслируются напрямую через интернет. Они не скачиваются на ваш ПК, поэтому перед началом воспроизведения может потребоваться несколько секунд для буферизации."
+              }
+            };
+          
+            document.getElementById('bannerLangSelect').addEventListener('change', (e) => {
+              const lang = e.target.value;
+              document.getElementById('bannerTitle').textContent = translations[lang].title;
+              document.getElementById('bannerDesc1').textContent = translations[lang].desc1;
+              document.getElementById('bannerDesc2').textContent = translations[lang].desc2;
+              document.getElementById('bannerDesc3').textContent = translations[lang].desc3;
+            });
+          </script>
+
           <!-- Continue Watching -->
           <section class="content-section" id="continueWatchingSection" style="display: none;">
             <div class="section-header">
