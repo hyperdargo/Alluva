@@ -40,7 +40,8 @@ const state = {
   lastTorrentCategory: null,
   lastTorrentEpisode: null,
   lastTorrentSeason: null,
-  vlcExtensionId: 'ihpiinojhnfhpdmmacgmpoonphhimkaj' // Open in VLC extension ID
+  vlcExtensionId: 'ihpiinojhnfhpdmmacgmpoonphhimkaj', // Open in VLC extension ID
+  sortWebRipFirst: false
 };
 
 // ==========================================================================
@@ -272,6 +273,17 @@ function parseExtension(title) {
   if (title.includes('.avi') || title.includes(' avi')) return 'AVI';
   if (title.includes('.webm')) return 'WEBM';
   return ''; 
+}
+
+function parseSourceType(title) {
+  title = title.toLowerCase();
+  if (title.includes('web-dl') || title.includes('webdl')) return 'WEB-DL';
+  if (title.includes('webrip') || title.includes(' web ')) return 'WEBRip';
+  if (title.includes('remux')) return 'Remux';
+  if (title.includes('bluray') || title.includes('blu-ray') || title.includes('bdrip') || title.includes('brrip')) return 'BluRay';
+  if (title.includes('hdts') || title.includes(' telesync ') || title.includes(' ts ')) return 'HDTS';
+  if (title.includes('camrip') || title.includes(' cam ')) return 'CAM';
+  return '';
 }
 
 function getPosterUrl(path, size = 'w500') {
@@ -1623,7 +1635,12 @@ function renderDetails(container, details, type) {
     </div>
     <div class="detail-section" id="torrentSearchSection" style="display: none;">
       <div style="display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3);">
-        <h3 class="detail-section-title" id="torrentSectionTitle" style="margin: 0; margin-bottom: var(--space-2);">Available Torrents</h3>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 class="detail-section-title" id="torrentSectionTitle" style="margin: 0;">Available Torrents</h3>
+          <label style="font-size: 14px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--color-text-secondary); background: var(--color-bg-tertiary); padding: 4px 10px; border-radius: 20px;">
+            <input type="checkbox" id="sortWebRipToggle" ${state.sortWebRipFirst ? 'checked' : ''}> ⭐ Prioritize WEBRip
+          </label>
+        </div>
         <div id="torrentProviderTabs" class="provider-tabs-container">
           <button class="provider-tab active" data-source="all">All Providers <span class="tab-count">0</span></button>
         </div>
@@ -1631,6 +1648,16 @@ function renderDetails(container, details, type) {
       <div class="torrents-list" id="torrentListGrid"></div>
     </div>
   `;
+
+  const sortToggle = document.getElementById('sortWebRipToggle');
+  if (sortToggle) {
+    sortToggle.addEventListener('change', (e) => {
+      state.sortWebRipFirst = e.target.checked;
+      // Re-render currently displayed torrents list by triggering the active tab again
+      const activeTab = document.querySelector('.provider-tab.active');
+      if (activeTab) activeTab.click();
+    });
+  }
 
   const headerActions = document.getElementById('detailHeaderActions');
   let youtubeKey = '';
@@ -2070,7 +2097,17 @@ function renderFilteredTorrents(torrentsList, selectedSource, categoryType, epis
   grid.innerHTML = '';
 
   const filtered = (selectedSource === 'all' ? torrentsList : torrentsList.filter(t => t.source === selectedSource))
-    .sort((a, b) => (b.seeders || 0) - (a.seeders || 0));
+    .sort((a, b) => {
+      if (state.sortWebRipFirst) {
+        const typeA = parseSourceType(a.title);
+        const typeB = parseSourceType(b.title);
+        const aIsWeb = (typeA === 'WEBRip' || typeA === 'WEB-DL');
+        const bIsWeb = (typeB === 'WEBRip' || typeB === 'WEB-DL');
+        if (aIsWeb && !bIsWeb) return -1;
+        if (!aIsWeb && bIsWeb) return 1;
+      }
+      return (b.seeders || 0) - (a.seeders || 0);
+    });
 
   if (filtered.length === 0) {
     grid.innerHTML = `<div class="empty-state"><h3>No Torrents from "${selectedSource}"</h3><p>Try choosing a different provider.</p></div>`;
@@ -2083,12 +2120,14 @@ function renderFilteredTorrents(torrentsList, selectedSource, categoryType, epis
     const sizeFormatted = formatBytes(torrent.size);
     const quality = parseQuality(torrent.title);
     const extension = parseExtension(torrent.title);
+    const sourceType = parseSourceType(torrent.title);
 
     item.innerHTML = `
       <div class="torrent-info">
         <h4 class="torrent-title" title="${torrent.title}">${torrent.title}</h4>
         <div class="torrent-meta">
           <span class="torrent-quality">${quality}</span>
+          ${sourceType ? `<span class="torrent-quality" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">${sourceType}</span>` : ''}
           ${extension ? `<span class="torrent-quality">${extension}</span>` : ''}
           <span class="torrent-size">${sizeFormatted}</span>
           <span class="torrent-seeders">⬆ ${torrent.seeders}</span>
