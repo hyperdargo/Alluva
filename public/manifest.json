@@ -1,0 +1,17 @@
+{
+  "name": "Stream Vault",
+  "short_name": "StreamVault",
+  "description": "Your self-hosted personal media hub for torrent searching, streaming, and metadata indexing.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d1a",
+  "theme_color": "#1a1a2e",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
