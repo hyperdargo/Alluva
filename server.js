@@ -609,7 +609,14 @@ async function searchPirateBayDirect(query) {
   const url = `https://apibay.org/q.php?q=${encodeURIComponent(query)}`;
   try {
     const response = await fetch(url);
-    const results = await response.json();
+    const text = await response.text();
+    let results;
+    try {
+      results = JSON.parse(text);
+    } catch(err) {
+      return []; // Return empty if apibay returns HTML/502 Error
+    }
+    
     if (!Array.isArray(results) || results.length === 0 || results[0].name === 'No results found') {
       return [];
     }
