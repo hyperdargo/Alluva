@@ -42,7 +42,11 @@ const state = {
   lastTorrentSeason: null,
   vlcExtensionId: 'ihpiinojhnfhpdmmacgmpoonphhimkaj', // Open in VLC extension ID
   sortWebRipFirst: false,
-  plyrInstance: null
+  plyrInstance: null,
+  currentPage: 1,
+  isLoadingPage: false,
+  currentCategory: null,
+  currentFilters: {}
 };
 
 // ==========================================================================
@@ -845,7 +849,7 @@ async function loadHomeView() {
   const upcomingAnimeGrid = document.getElementById('upcomingAnimeGrid');
   const torrentsGrid = document.getElementById('recentTorrentsGrid');
 
-  const fillSkeletons = (el, count = 18) => {
+  const fillSkeletons = (el, count = 16) => {
     if (el) el.innerHTML = Array(count).fill('<div class="media-card poster-card skeleton"></div>').join('');
   };
 
@@ -871,7 +875,7 @@ async function loadHomeView() {
       if (!grid) return;
       grid.innerHTML = '';
       if (items && items.length > 0) {
-        items.slice(0, 18).forEach(item => {
+        items.slice(0, 16).forEach(item => {
           grid.appendChild(createMediaCard(item, type));
         });
       } else {
@@ -890,7 +894,7 @@ async function loadHomeView() {
     if (torrentsGrid) {
       torrentsGrid.innerHTML = '';
       if (data.torrents && data.torrents.length > 0) {
-        data.torrents.slice(0, 18).forEach(item => {
+        data.torrents.slice(0, 16).forEach(item => {
           const itemCard = document.createElement('div');
           itemCard.className = 'torrent-item';
           const qual = parseQuality(item.title);
@@ -959,10 +963,19 @@ function populateYearFilters(selectId) {
   }
 }
 
-async function loadAnimeView() {
+async function loadAnimeView(page = 1) {
   const grid = document.getElementById('animeGrid');
-  grid.innerHTML = Array(50).fill('<div class="media-card poster-card skeleton"></div>').join('');
-
+  if (page === 1) {
+    grid.innerHTML = Array(20).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    state.currentPage = 1;
+    state.currentCategory = 'anime';
+  } else {
+    const skeletonHTML = Array(10).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    grid.insertAdjacentHTML('beforeend', skeletonHTML);
+    state.currentPage = page;
+  }
+  
+  state.isLoadingPage = true;
   populateYearFilters('animeYearFilter');
 
   const season = document.getElementById('animeSeasonFilter').value;
@@ -971,43 +984,93 @@ async function loadAnimeView() {
 
   try {
     const searchString = document.getElementById('searchInput').value.trim();
-    let data;
+    let url = '';
+    
     if (searchString) {
+      if (page > 1) { state.isLoadingPage = false; return; }
       const selectedIndexers = state.preferences.selectedIndexers.join(',');
-      const res = await fetch(`/api/search?type=anime&indexers=${selectedIndexers}&q=${encodeURIComponent(searchString)}`);
-      data = await res.json();
+      url = `/api/search?type=anime&indexers=${selectedIndexers}&q=${encodeURIComponent(searchString)}`;
     } else {
-      const res = await fetch('/api/trending');
-      const trending = await res.json();
-      data = { anime: trending.anime || [] };
+      url = `/api/discover?type=anime&page=${page}`;
+      if (year) url += `&year=${year}`;
+      // Currently not filtering genre for anime via api due to missing genre dropdown, but ready for future
     }
 
-    grid.innerHTML = '';
-    if (data.anime && data.anime.length > 0) {
-      let filtered = data.anime;
-      if (season) filtered = filtered.filter(item => item.season === season);
-      if (year) filtered = filtered.filter(item => item.startDate?.year == year);
-      if (status) filtered = filtered.filter(item => item.status === status);
+    const res = await fetch(url);
+    const data = await res.json();
+    let items = searchString ? data.anime : data.media;
 
-      if (filtered.length > 0) {
-        filtered.forEach(item => {
-          grid.appendChild(createMediaCard(item, 'anime'));
-        });
+    if (page === 1) {
+      grid.innerHTML = '';
+    } else {
+      const skeletons = grid.querySelectorAll('.skeleton');
+      skeletons.forEach(s => s.remove());
+    }
+
+    if (items && items.length > 0) {
+      let filtered = items;
+      if (searchString) {
+        if (season) filtered = filtered.filter(item => item.season === season);
+        if (year) filtered = filtered.filter(item => item.startDate?.year == year);
+        if (status) filtered = filtered.filter(item => item.status === status);
       } else {
+        // API already filters year, so just filter status/season client side if needed
+        if (season) filtered = filtered.filter(item => item.season === season);
+        if (status) filtered = filtered.filter(item => item.status === status);
+      }
+
+      filtered.forEach(item => {
+        grid.appendChild(createMediaCard(item, 'anime'));
+      });
+      
+      if (!searchString && items.length > 0) {
+        observeLastItem(grid, 'anime');
+      }
+      
+      if (filtered.length === 0 && page === 1) {
         grid.innerHTML = '<div class="empty-state"><h3>No matches found</h3><p>Try modifying your filters.</p></div>';
       }
-    } else {
+    } else if (page === 1) {
       grid.innerHTML = '<div class="empty-state"><h3>No results</h3><p>Could not fetch anime data.</p></div>';
     }
   } catch (err) {
-    grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to retrieve anime.</p></div>';
+    if (page === 1) grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to retrieve anime.</p></div>';
+  }
+  state.isLoadingPage = false;
+}
+
+function observeLastItem(grid, type) {
+  const observer = new IntersectionObserver((entries, obs) => {
+    const last = entries[0];
+    if (last.isIntersecting && !state.isLoadingPage) {
+      obs.disconnect();
+      const nextPage = state.currentPage + 1;
+      
+      if (type === 'movies') loadMoviesView(nextPage);
+      else if (type === 'tv') loadTVView(nextPage);
+      else if (type === 'anime') loadAnimeView(nextPage);
+    }
+  }, { rootMargin: '200px' });
+  
+  const lastElement = grid.lastElementChild;
+  if (lastElement) {
+    observer.observe(lastElement);
   }
 }
 
-async function loadMoviesView() {
+async function loadMoviesView(page = 1) {
   const grid = document.getElementById('moviesGrid');
-  grid.innerHTML = Array(50).fill('<div class="media-card poster-card skeleton"></div>').join('');
-
+  if (page === 1) {
+    grid.innerHTML = Array(20).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    state.currentPage = 1;
+    state.currentCategory = 'movies';
+  } else {
+    const skeletonHTML = Array(10).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    grid.insertAdjacentHTML('beforeend', skeletonHTML);
+    state.currentPage = page;
+  }
+  
+  state.isLoadingPage = true;
   populateYearFilters('movieYearFilter');
 
   const year = document.getElementById('movieYearFilter').value;
@@ -1016,50 +1079,73 @@ async function loadMoviesView() {
   try {
     const searchString = document.getElementById('searchInput').value.trim();
     let url = '';
+    
+    // Search is handled client-side without infinite scroll currently
     if (searchString) {
+      if (page > 1) { state.isLoadingPage = false; return; }
       url = `/api/search?type=movie&q=${encodeURIComponent(searchString)}`;
     } else {
-      url = '/api/trending';
+      url = `/api/discover?type=movie&page=${page}`;
+      if (year) url += `&year=${year}`;
+      if (genre) url += `&genre=${genre}`;
     }
 
     const res = await fetch(url);
     const data = await res.json();
-    let items = searchString ? data.media : data.movies;
+    let items = searchString ? data.media : data.media;
 
-    grid.innerHTML = '';
+    if (page === 1) {
+      grid.innerHTML = '';
+    } else {
+      const skeletons = grid.querySelectorAll('.skeleton');
+      skeletons.forEach(s => s.remove());
+    }
+
     if (items && items.length > 0) {
-      let filtered = items.filter(item => !item.media_type || item.media_type === 'movie');
-      if (year) {
-        filtered = filtered.filter(item => {
-          const release = item.release_date || '';
-          return release.startsWith(year);
-        });
-      }
-      populateGenres(items, 'movieGenreFilter');
-
-      if (genre) {
-        filtered = filtered.filter(item => item.genre_ids && item.genre_ids.includes(parseInt(genre)));
+      let filtered = items;
+      if (searchString) {
+        filtered = filtered.filter(item => !item.media_type || item.media_type === 'movie');
+        if (year) filtered = filtered.filter(item => (item.release_date || '').startsWith(year));
+        if (genre) filtered = filtered.filter(item => item.genre_ids && item.genre_ids.includes(parseInt(genre)));
       }
 
-      if (filtered.length > 0) {
-        filtered.forEach(item => {
-          grid.appendChild(createMediaCard(item, 'movie'));
-        });
-      } else {
+      if (page === 1 && !searchString) {
+        populateGenres(items, 'movieGenreFilter');
+      }
+
+      filtered.forEach(item => {
+        grid.appendChild(createMediaCard(item, 'movie'));
+      });
+      
+      if (!searchString && items.length > 0) {
+        observeLastItem(grid, 'movies');
+      }
+      
+      if (filtered.length === 0 && page === 1) {
         grid.innerHTML = '<div class="empty-state"><h3>No matches</h3><p>Try resetting filters.</p></div>';
       }
-    } else {
+    } else if (page === 1) {
       grid.innerHTML = '<div class="empty-state"><h3>No Movies</h3><p>Configure your TMDB API Key in environment.</p></div>';
     }
   } catch (err) {
-    grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to connect to TMDB.</p></div>';
+    if (page === 1) grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to connect to TMDB.</p></div>';
   }
+  state.isLoadingPage = false;
 }
 
-async function loadTVView() {
+async function loadTVView(page = 1) {
   const grid = document.getElementById('tvGrid');
-  grid.innerHTML = Array(50).fill('<div class="media-card poster-card skeleton"></div>').join('');
-
+  if (page === 1) {
+    grid.innerHTML = Array(20).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    state.currentPage = 1;
+    state.currentCategory = 'tv';
+  } else {
+    const skeletonHTML = Array(10).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    grid.insertAdjacentHTML('beforeend', skeletonHTML);
+    state.currentPage = page;
+  }
+  
+  state.isLoadingPage = true;
   populateYearFilters('tvYearFilter');
 
   const year = document.getElementById('tvYearFilter').value;
@@ -1068,44 +1154,57 @@ async function loadTVView() {
   try {
     const searchString = document.getElementById('searchInput').value.trim();
     let url = '';
+    
     if (searchString) {
+      if (page > 1) { state.isLoadingPage = false; return; }
       url = `/api/search?type=tv&q=${encodeURIComponent(searchString)}`;
     } else {
-      url = '/api/trending';
+      url = `/api/discover?type=tv&page=${page}`;
+      if (year) url += `&year=${year}`;
+      if (genre) url += `&genre=${genre}`;
     }
 
     const res = await fetch(url);
     const data = await res.json();
-    let items = searchString ? data.media : data.tv;
+    let items = searchString ? data.media : data.media;
 
-    grid.innerHTML = '';
+    if (page === 1) {
+      grid.innerHTML = '';
+    } else {
+      const skeletons = grid.querySelectorAll('.skeleton');
+      skeletons.forEach(s => s.remove());
+    }
+
     if (items && items.length > 0) {
-      let filtered = items.filter(item => !item.media_type || item.media_type === 'tv');
-      if (year) {
-        filtered = filtered.filter(item => {
-          const release = item.first_air_date || '';
-          return release.startsWith(year);
-        });
-      }
-      populateGenres(items, 'tvGenreFilter');
-
-      if (genre) {
-        filtered = filtered.filter(item => item.genre_ids && item.genre_ids.includes(parseInt(genre)));
+      let filtered = items;
+      if (searchString) {
+        filtered = filtered.filter(item => !item.media_type || item.media_type === 'tv');
+        if (year) filtered = filtered.filter(item => (item.first_air_date || '').startsWith(year));
+        if (genre) filtered = filtered.filter(item => item.genre_ids && item.genre_ids.includes(parseInt(genre)));
       }
 
-      if (filtered.length > 0) {
-        filtered.forEach(item => {
-          grid.appendChild(createMediaCard(item, 'tv'));
-        });
-      } else {
+      if (page === 1 && !searchString) {
+        populateGenres(items, 'tvGenreFilter');
+      }
+
+      filtered.forEach(item => {
+        grid.appendChild(createMediaCard(item, 'tv'));
+      });
+      
+      if (!searchString && items.length > 0) {
+        observeLastItem(grid, 'tv');
+      }
+      
+      if (filtered.length === 0 && page === 1) {
         grid.innerHTML = '<div class="empty-state"><h3>No matches</h3><p>Try resetting filters.</p></div>';
       }
-    } else {
+    } else if (page === 1) {
       grid.innerHTML = '<div class="empty-state"><h3>No TV Shows</h3><p>Configure your TMDB API Key in environment.</p></div>';
     }
   } catch (err) {
-    grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to connect to TMDB.</p></div>';
+    if (page === 1) grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to connect to TMDB.</p></div>';
   }
+  state.isLoadingPage = false;
 }
 
 function populateGenres(items, selectId) {

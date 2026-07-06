@@ -772,14 +772,19 @@ function parseTorznabItems(xml, sourceName) {
   return items;
 }
 
-// ============= AniList Search =============
-async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20) {
+// ============= AniList Search & Discover =============
+async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20, filters = {}) {
   const hasSearch = query && query.trim().length > 0;
+  
+  let genreFilter = '';
+  let yearFilter = '';
+  if (filters.genre) genreFilter = ', genre: $genre';
+  if (filters.year) yearFilter = ', seasonYear: $year';
 
   const graphqlQuery = hasSearch ? `
-    query ($search: String, $type: MediaType, $page: Int, $perPage: Int) {
+    query ($search: String, $type: MediaType, $page: Int, $perPage: Int${filters.genre ? ', $genre: String' : ''}${filters.year ? ', $year: Int' : ''}) {
       Page(page: $page, perPage: $perPage) {
-        media(search: $search, type: $type, sort: [POPULARITY_DESC, SCORE_DESC]) {
+        media(search: $search, type: $type, sort: [POPULARITY_DESC, SCORE_DESC]${genreFilter}${yearFilter}) {
           id
           title { romaji english native }
           coverImage { large medium }
@@ -800,9 +805,9 @@ async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20) {
       }
     }
   ` : `
-    query ($type: MediaType, $page: Int, $perPage: Int) {
+    query ($type: MediaType, $page: Int, $perPage: Int${filters.genre ? ', $genre: String' : ''}${filters.year ? ', $year: Int' : ''}) {
       Page(page: $page, perPage: $perPage) {
-        media(type: $type, sort: [POPULARITY_DESC, SCORE_DESC]) {
+        media(type: $type, sort: [POPULARITY_DESC, SCORE_DESC]${genreFilter}${yearFilter}) {
           id
           title { romaji english native }
           coverImage { large medium }
@@ -824,9 +829,12 @@ async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20) {
     }
   `;
 
-  const variables = hasSearch
-    ? { search: query, type, page, perPage }
-    : { type, page, perPage };
+  const variables = { type, page, perPage };
+  if (hasSearch) variables.search = query;
+  
+  // AniList requires specific genre casing, but usually Title Case works.
+  if (filters.genre) variables.genre = filters.genre;
+  if (filters.year) variables.year = parseInt(filters.year);
 
   try {
     const response = await fetch('https://graphql.anilist.co', {
@@ -1116,6 +1124,40 @@ app.get('/api/search/stream', async (req, res) => {
     res.write('data: {"done": true}\n\n');
     res.end();
   });
+});
+
+// ============= Discover endpoint (Infinite Scroll & Filters) =============
+app.get('/api/discover', async (req, res) => {
+  const { type, page = 1, year, genre } = req.query;
+  const pageNum = parseInt(page) || 1;
+
+  try {
+    if (type === 'anime') {
+      const filters = {};
+      if (year) filters.year = year;
+      if (genre) filters.genre = genre;
+      const anime = await searchAniList('', 'ANIME', pageNum, 20, filters);
+      return res.json({ media: anime });
+    } else if (type === 'movie' || type === 'tv') {
+      if (!TMDB_API_KEY || TMDB_API_KEY === 'your_tmdb_key_here') {
+        return res.json({ media: [] });
+      }
+      
+      let url = `https://api.themoviedb.org/3/discover/${type}?api_key=${TMDB_API_KEY}&language=en-US&page=${pageNum}&sort_by=popularity.desc`;
+      if (year) {
+        url += type === 'movie' ? `&primary_release_year=${year}` : `&first_air_date_year=${year}`;
+      }
+      if (genre) url += `&with_genres=${genre}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+      return res.json({ media: data.results || [] });
+    }
+    res.json({ media: [] });
+  } catch (error) {
+    console.error('Discover API Error:', error.message);
+    res.status(500).json({ error: 'Failed to discover media' });
+  }
 });
 
 // ============= Unified search endpoint =============
