@@ -524,28 +524,30 @@
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
             </button>
+            <!-- Inline Player Container -->
+            <div class="inline-player-wrapper" id="playerModal" style="display: none;">
+              <div class="player-header">
+                <h3 class="player-title" id="playerTitle">Video Player</h3>
+                <button class="modal-close" id="playerClose" aria-label="Close player">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              <div class="player-container">
+                <video class="video-player" id="videoPlayer" controls playsinline crossorigin="anonymous">
+                  <!-- Subtitles will be injected here -->
+                </video>
+                <div class="player-actions" id="playerActions"></div>
+                <!-- Hidden file input for subtitles -->
+                <input type="file" id="subtitleUpload" accept=".srt,.vtt" style="display: none;">
+              </div>
+            </div>
+
             <div class="detail-content" id="detailContent"></div>
           </div>
         </section>
-
-        <!-- Player Modal -->
-        <div class="modal-overlay" id="playerModal" style="display: none;">
-          <div class="modal player-modal">
-            <div class="player-header">
-              <h3 class="player-title" id="playerTitle">Video Player</h3>
-              <button class="modal-close" id="playerClose" aria-label="Close player">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            <div class="player-container">
-              <video class="video-player" id="videoPlayer" controls playsinline></video>
-              <div class="player-actions" id="playerActions"></div>
-            </div>
-          </div>
-        </div>
 
         <!-- Add to Catalog Modal -->
         <div class="modal-overlay" id="catalogModal" style="display: none;">
