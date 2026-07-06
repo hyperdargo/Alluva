@@ -1,0 +1,17 @@
+{
+  "name": "stream-vault",
+  "version": "1.0.2",
+  "description": "Stream Vault - Personal Media Hub with torrent search, metadata, and in-browser playback",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0",
+    "webtorrent": "^3.0.16"
+  }
+}

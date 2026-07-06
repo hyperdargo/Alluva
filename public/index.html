@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="description" content="Stream Vault - Your personal media hub for anime, movies, and TV shows">
+  <title>Stream Vault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+
+<body>
+  <div id="app">
+    <!-- Sleek Top Navigation -->
+    <header class="top-nav" id="topNav">
+      <div class="nav-left">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <a href="#/home" class="logo" data-view="home">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px; height:28px;">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <span class="logo-text">Stream Vault</span>
+        </a>
+      </div>
+
+      <div class="nav-right">
+        <div class="search-container">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="search-input" id="searchInput" placeholder="Search movies, tv, anime..." autocomplete="off">
+          <div class="search-suggestions" id="searchSuggestions"></div>
+        </div>
+        
+        <select class="indexer-select" id="indexerSelect" title="Select torrent indexers">
+          <option value="all">All Indexers</option>
+          <option value="1">1337x</option>
+          <option value="2">The Pirate Bay</option>
+          <option value="4">Nyaa.si (Anime)</option>
+          <option value="10">Ext.to (Movies/TV)</option>
+          <option value="11">YTS.gg (Movies)</option>
+          <option value="12">EZTVx.to (TV Shows)</option>
+        </select>
+        
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        
+        <a href="#/settings" class="nav-item icon-btn" data-view="settings" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px; height:20px;">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- Side Drawer Navigation -->
+    <div class="side-drawer-overlay" id="sideDrawerOverlay"></div>
+    <aside class="side-drawer" id="sideDrawer">
+      <div class="side-drawer-header">
+        <h3 class="side-drawer-title">Menu</h3>
+        <button class="icon-btn" id="closeDrawerBtn" aria-label="Close menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <nav class="side-drawer-nav">
+        <a href="#/home" class="drawer-link" data-view="home">Home</a>
+        <a href="#/anime" class="drawer-link" data-view="anime">Anime</a>
+        <a href="#/movies" class="drawer-link" data-view="movies">Movies</a>
+        <a href="#/tv" class="drawer-link" data-view="tv">TV Shows</a>
+        <a href="#/catalog" class="drawer-link" data-view="catalog">My Catalog</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+
+      <!-- View Container -->
+      <div class="view-container" id="viewContainer">
+        <!-- Home View -->
+        <section class="view active" id="homeView">
+          <!-- Hero Banner -->
+          <div class="hero-banner-container" id="heroBannerContainer">
+            <!-- Populated dynamically by app.js -->
+          </div>
+
+          <!-- Continue Watching -->
+          <section class="content-section" id="continueWatchingSection" style="display: none;">
+            <div class="section-header">
+              <h2 class="section-title">Continue Watching</h2>
+            </div>
+            <div class="content-grid" id="continueWatchingGrid"></div>
+          </section>
+
+          <!-- Trending Anime -->
+          <section class="content-section">
+            <div class="section-header">
+              <h2 class="section-title">Trending Anime</h2>
+              <a href="#/anime" class="section-link" data-view="anime">View All</a>
+            </div>
+            <div class="content-grid" id="trendingAnimeGrid"></div>
+          </section>
+
+          <!-- Popular Movies -->
+          <section class="content-section">
+            <div class="section-header">
+              <h2 class="section-title">Popular Movies</h2>
+              <a href="#/movies" class="section-link" data-view="movies">View All</a>
+            </div>
+            <div class="content-grid" id="popularMoviesGrid"></div>
+          </section>
+
+          <!-- Trending TV Shows -->
+          <section class="content-section">
+            <div class="section-header">
+              <h2 class="section-title">Trending TV Shows</h2>
+              <a href="#/tv" class="section-link" data-view="tv">View All</a>
+            </div>
+            <div class="content-grid" id="trendingTVGrid"></div>
+          </section>
+
+          <!-- Upcoming Movies -->
+          <section class="content-section">
+            <div class="section-header">
+              <h2 class="section-title">Upcoming Movies</h2>
+              <a href="#/movies" class="section-link" data-view="movies">View All</a>
+            </div>
+            <div class="content-grid" id="upcomingMoviesGrid"></div>
+          </section>
+
+          <!-- Top Rated Movies -->
+          <section class="content-section">
+            <div class="section-header">
+              <h2 class="section-title">Top Rated Movies</h2>
+              <a href="#/movies" class="section-link" data-view="movies">View All</a>
+            </div>
+            <div class="content-grid" id="topRatedMoviesGrid"></div>
+          </section>
+
+          <!-- Top Rated TV Shows -->
+          <section class="content-section">
+            <div class="section-header">
+              <h2 class="section-title">Top Rated TV Shows</h2>
+              <a href="#/tv" class="section-link" data-view="tv">View All</a>
+            </div>
+            <div class="content-grid" id="topRatedTVGrid"></div>
+          </section>
+
+          <!-- Upcoming Anime -->
+          <section class="content-section">
+            <div class="section-header">
+              <h2 class="section-title">Upcoming Anime</h2>
+              <a href="#/anime" class="section-link" data-view="anime">View All</a>
+            </div>
+            <div class="content-grid" id="upcomingAnimeGrid"></div>
+          </section>
+
+          <!-- Recent Torrents -->
+          <section class="content-section">
+            <div class="section-header">
+              <h2 class="section-title">Recent Torrents</h2>
+            </div>
+            <div class="content-grid" id="recentTorrentsGrid"></div>
+          </section>
+        </section>
+
+        <!-- Anime View -->
+        <section class="view" id="animeView">
+          <div class="view-header">
+            <h1 class="view-title">Anime</h1>
+            <div class="view-filters">
+              <select class="filter-select" id="animeSeasonFilter">
+                <option value="">All Seasons</option>
+                <option value="WINTER">Winter</option>
+                <option value="SPRING">Spring</option>
+                <option value="SUMMER">Summer</option>
+                <option value="FALL">Fall</option>
+              </select>
+              <select class="filter-select" id="animeYearFilter">
+                <option value="">All Years</option>
+              </select>
+              <select class="filter-select" id="animeStatusFilter">
+                <option value="">All Status</option>
+                <option value="RELEASING">Airing</option>
+                <option value="FINISHED">Finished</option>
+                <option value="NOT_YET_RELEASED">Upcoming</option>
+              </select>
+            </div>
+          </div>
+          <div class="content-grid" id="animeGrid"></div>
+        </section>
+
+        <!-- Movies View -->
+        <section class="view" id="moviesView">
+          <div class="view-header">
+            <h1 class="view-title">Movies</h1>
+            <div class="view-filters">
+              <select class="filter-select" id="movieYearFilter">
+                <option value="">All Years</option>
+              </select>
+              <select class="filter-select" id="movieGenreFilter">
+                <option value="">All Genres</option>
+              </select>
+            </div>
+          </div>
+          <div class="content-grid" id="moviesGrid"></div>
+        </section>
+
+        <!-- TV Shows View -->
+        <section class="view" id="tvView">
+          <div class="view-header">
+            <h1 class="view-title">TV Shows</h1>
+            <div class="view-filters">
+              <select class="filter-select" id="tvYearFilter">
+                <option value="">All Years</option>
+              </select>
+              <select class="filter-select" id="tvGenreFilter">
+                <option value="">All Genres</option>
+              </select>
+            </div>
+          </div>
+          <div class="content-grid" id="tvGrid"></div>
+        </section>
+
+        <!-- Schedule View -->
+        <section class="view" id="scheduleView">
+          <div class="view-header">
+            <h1 class="view-title">Release Schedule</h1>
+            <div class="view-filters">
+              <select class="filter-select" id="scheduleTimezone">
+                <option value="local">Local Time</option>
+                <option value="UTC">UTC</option>
+                <option value="JST">JST (Japan)</option>
+              </select>
+            </div>
+          </div>
+          <div class="schedule-container" id="scheduleContainer"></div>
+        </section>
+
+        <!-- Catalog View -->
+        <section class="view" id="catalogView">
+          <div class="view-header">
+            <h1 class="view-title">My Catalog</h1>
+          </div>
+          <div class="content-grid" id="catalogGrid"></div>
+        </section>
+
+        <!-- Search View -->
+        <section class="view" id="searchView">
+          <div class="view-header">
+            <h1 class="view-title" id="searchViewTitle">Search Results</h1>
+          </div>
+          <div class="search-results-container" style="display: flex; flex-direction: column; gap: var(--space-8);">
+            <div class="content-section" id="searchAnimeSection" style="display: none;">
+              <h2 class="section-title">Anime Results</h2>
+              <div class="content-grid" id="searchAnimeGrid"></div>
+            </div>
+            <div class="content-section" id="searchMediaSection" style="display: none;">
+              <h2 class="section-title">Movies & TV Shows Results</h2>
+              <div class="content-grid" id="searchMediaGrid"></div>
+            </div>
+            <div class="content-section" id="searchNoResults" style="display: none;">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <h3>No results found</h3>
+                <p>Try different keywords or check spelling.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Settings View -->
+        <section class="view" id="settingsView">
+          <div class="settings-container">
+            <h1 class="view-title">Settings</h1>
+
+            <div class="settings-section">
+              <h2 class="settings-title">Appearance</h2>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Theme</span>
+                  <span class="setting-description">Choose your preferred color scheme</span>
+                </div>
+                <select class="setting-select" id="themeSetting">
+                  <option value="system">System</option>
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h2 class="settings-title">Playback</h2>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Default Player</span>
+                  <span class="setting-description">Choose how to play torrents</span>
+                </div>
+                <select class="setting-select" id="playerSetting">
+                  <option value="vlc">VLC Media Player (via TorrServer)</option>
+                  <option value="vlc_webtorrent">VLC Media Player (via Local WebTorrent)</option>
+                  <option value="mpv">MPV Media Player (via TorrServer)</option>
+                  <option value="mpv_webtorrent">MPV Media Player (via Local WebTorrent)</option>
+                  <option value="webtorrent">WebTorrent (In-browser HTML5)</option>
+                  <option value="torrserver">TorrServer Player (In-browser HTML5)</option>
+                  <option value="copy">Copy Magnet Link</option>
+                </select>
+              </div>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Auto-play Next Episode</span>
+                  <span class="setting-description">Automatically play the next episode when one ends</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="autoplaySetting">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h2 class="settings-title">External Players</h2>
+              <div class="setting-item flex-column">
+                <div class="setting-info" style="margin-bottom: 8px;">
+                  <span class="setting-label">VLC Path</span>
+                  <span class="setting-description">Leave blank to use default location</span>
+                </div>
+                <input type="text" class="setting-input" id="vlcPathSetting" placeholder="C:\Program Files\VideoLAN\VLC\vlc.exe" style="width: 100%; max-width: 100%; margin-top: 4px;">
+              </div>
+              <div class="setting-item flex-column">
+                <div class="setting-info" style="margin-bottom: 8px;">
+                  <span class="setting-label">VLC Arguments</span>
+                  <span class="setting-description">Command line arguments to pass to VLC</span>
+                </div>
+                <input type="text" class="setting-input" id="vlcArgsSetting" placeholder="--network-caching=3000" style="width: 100%; max-width: 100%; margin-top: 4px;">
+              </div>
+              <div class="setting-item flex-column">
+                <div class="setting-info" style="margin-bottom: 8px;">
+                  <span class="setting-label">MPV Path</span>
+                  <span class="setting-description">Leave blank to launch 'mpv' from system PATH</span>
+                </div>
+                <input type="text" class="setting-input" id="mpvPathSetting" placeholder="C:\mpv\mpv.exe" style="width: 100%; max-width: 100%; margin-top: 4px;">
+              </div>
+              <div class="setting-item flex-column">
+                <div class="setting-info" style="margin-bottom: 8px;">
+                  <span class="setting-label">MPV Arguments</span>
+                  <span class="setting-description">Command line arguments to pass to MPV</span>
+                </div>
+                <input type="text" class="setting-input" id="mpvArgsSetting" placeholder="--cache=yes" style="width: 100%; max-width: 100%; margin-top: 4px;">
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h2 class="settings-title">Torrent Indexers</h2>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Default Indexers</span>
+                  <span class="setting-description">Select which indexers to search by default</span>
+                </div>
+                <div class="indexer-checkboxes" id="indexerCheckboxes"></div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h2 class="settings-title">Data & Privacy</h2>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Clear Session Data</span>
+                  <span class="setting-description">Remove all cached data and continue watching history</span>
+                </div>
+                <button class="btn btn-danger" id="clearDataBtn">Clear All Data</button>
+              </div>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Export Data</span>
+                  <span class="setting-description">Download your catalog and settings as JSON</span>
+                </div>
+                <button class="btn btn-secondary" id="exportDataBtn">Export</button>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <h2 class="settings-title">About</h2>
+              <div class="about-info">
+                <p>Stream Vault v1.0.0</p>
+                <p>A self-hosted personal media hub inspired by Jellyfin</p>
+                <p>Built with Express.js, AniList, TMDB, and Torznab indexers</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Detail View (Anime/Movie/TV) -->
+        <section class="view detail-view" id="detailView" style="display: none;">
+          <div class="detail-container">
+            <button class="detail-back" id="detailBack" aria-label="Back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+            <div class="detail-content" id="detailContent"></div>
+          </div>
+        </section>
+
+        <!-- Player Modal -->
+        <div class="modal-overlay" id="playerModal" style="display: none;">
+          <div class="modal player-modal">
+            <div class="player-header">
+              <h3 class="player-title" id="playerTitle">Video Player</h3>
+              <button class="modal-close" id="playerClose" aria-label="Close player">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div class="player-container">
+              <video class="video-player" id="videoPlayer" controls playsinline></video>
+              <div class="player-actions" id="playerActions"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add to Catalog Modal -->
+        <div class="modal-overlay" id="catalogModal" style="display: none;">
+          <div class="modal catalog-modal">
+            <div class="modal-header">
+              <h3>Add to Catalog</h3>
+              <button class="modal-close" id="catalogModalClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <form class="catalog-form" id="catalogForm">
+              <input type="hidden" id="catalogItemType">
+              <input type="hidden" id="catalogItemId">
+              <div class="form-group">
+                <label for="catalogTitle">Title</label>
+                <input type="text" id="catalogTitle" required>
+              </div>
+              <div class="form-group">
+                <label for="catalogPoster">Poster URL</label>
+                <input type="url" id="catalogPoster">
+              </div>
+              <div class="form-group">
+                <label for="catalogUrl">Stream URL / Magnet Link</label>
+                <input type="text" id="catalogUrl" required>
+              </div>
+              <div class="form-group">
+                <label for="catalogType">Type</label>
+                <select id="catalogType" required>
+                  <option value="anime">Anime</option>
+                  <option value="movie">Movie</option>
+                  <option value="tv">TV Show</option>
+                  <option value="direct">Direct Link</option>
+                </select>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="catalogCancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add to Catalog</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+          <div class="spinner"></div>
+          <p>Loading...</p>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+      </div>
+
+      <footer class="app-footer">
+        <p>&copy; copyright by DTEmpire (DargoTamber) | version 1.0.2</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

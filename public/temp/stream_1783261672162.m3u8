@@ -1,0 +1,3 @@
+#EXTM3U
+#EXTINF:-1,Stream Vault Playback
+http://localhost:3000/api/webtorrent/stream?magnet=magnet%3A%3Fxt%3Durn%3Abtih%3AAFA1047F19870E4A75A8603037FD0FB11BDFDCE0%26dn%3DObsession.2026.1080p.AMZN.WEB-DL.DDP5.1.H264.MP4-BTM%26tr%3Dudp%253A%252F%252Ftracker.opentrackr.org%253A1337%252Fannounce%26tr%3Dudp%253A%252F%252Ftracker.coppersurfer.tk%253A6969%252Fannounce%26tr%3Dudp%253A%252F%252Ftracker.openbittorrent.com%253A80%252Fannounce%26tr%3Dudp%253A%252F%252Fopen.demonii.com%253A1337%252Fannounce%26tr%3Dudp%253A%252F%252Ftracker.torrent.eu.org%253A451%252Fannounce%26tr%3Dudp%253A%252F%252Fexplodie.org%253A6969%252Fannounce
