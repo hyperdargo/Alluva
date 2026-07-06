@@ -2012,40 +2012,6 @@ ul, ol {
   font-family: var(--font-family-sans);
 }
 
-.player-actions {
-  display: flex;
-  gap: var(--space-3);
-  justify-content: center;
-  padding: var(--space-4);
-  width: 100%;
-  background: var(--color-bg-primary);
-}
-
-.player-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  transition: all var(--transition-fast);
-}
-
-.player-action-btn:hover {
-  background: var(--color-accent-primary);
-  border-color: var(--color-accent-primary);
-  color: white;
-}
-
-.player-action-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
 /* Catalog Modal */
 .catalog-modal {
   width: 100%;

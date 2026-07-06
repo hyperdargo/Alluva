@@ -2529,7 +2529,6 @@ function openVideoPlayer(title, url, trackingInfo = {}) {
   const modal = document.getElementById('playerModal');
   const video = document.getElementById('videoPlayer');
   const titleEl = document.getElementById('playerTitle');
-  const actionsEl = document.getElementById('playerActions');
 
   modal.style.display = 'block';
   modal.style.position = '';
@@ -2543,17 +2542,6 @@ function openVideoPlayer(title, url, trackingInfo = {}) {
   modal.style.justifyContent = '';
 
   titleEl.textContent = title || 'Video Player';
-  actionsEl.innerHTML = '';
-
-  // Add Subtitle button
-  const subBtn = document.createElement('button');
-  subBtn.className = 'player-action-btn sub-btn';
-  subBtn.innerHTML = '💬 Load Subtitle (.srt / .vtt)';
-  subBtn.style.cssText = 'background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 4px; font-weight: 500;';
-  subBtn.addEventListener('click', () => {
-    document.getElementById('subtitleUpload').click();
-  });
-  actionsEl.appendChild(subBtn);
 
   // Clear old subtitle tracks
   Array.from(video.getElementsByTagName('track')).forEach(t => t.remove());
@@ -3124,62 +3112,6 @@ document.addEventListener('DOMContentLoaded', () => {
   bindFilter('tvYearFilter', loadTVView);
   bindFilter('tvGenreFilter', loadTVView);
   bindFilter('scheduleTimezone', loadScheduleView);
-
-  // Subtitle Upload Handler
-  const subUpload = document.getElementById('subtitleUpload');
-  if (subUpload) {
-    subUpload.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const video = document.getElementById('videoPlayer');
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        let content = event.target.result;
-        
-        // Very basic SRT to VTT conversion if needed (HTML5 track requires VTT format)
-        if (file.name.toLowerCase().endsWith('.srt')) {
-          content = 'WEBVTT\n\n' + content.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
-        }
-
-        const blob = new Blob([content], { type: 'text/vtt' });
-        const url = URL.createObjectURL(blob);
-
-        // Remove old custom tracks
-        Array.from(video.getElementsByTagName('track')).forEach(t => {
-          if (t.className === 'custom-subtitle-track') t.remove();
-        });
-
-        const track = document.createElement('track');
-        track.className = 'custom-subtitle-track';
-        track.kind = 'subtitles';
-        track.label = file.name;
-        track.srclang = 'en';
-        track.src = url;
-        track.default = true;
-        
-        video.appendChild(track);
-        
-        // Force track to show
-        if (video.textTracks && video.textTracks.length > 0) {
-          video.textTracks[video.textTracks.length - 1].mode = 'showing';
-        }
-        
-        if (state.plyrInstance) {
-          setTimeout(() => {
-            state.plyrInstance.captions.currentTrack = 0;
-            state.plyrInstance.captions.active = true;
-          }, 200);
-        }
-
-        showToast(`Loaded subtitle: ${file.name}`, 'success');
-        subUpload.value = ''; // Reset input
-      };
-      
-      reader.readAsText(file);
-    });
-  }
 
   // Check VLC status
   setTimeout(checkVLCInstalled, 2000);
