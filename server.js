@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 const TORZNAB_API_KEY = process.env.TORZNAB_API_KEY || '4bf8dd57f1d043ae88fb5da57f789994';
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TORZNAB_BASE_URL = process.env.TORZNAB_BASE_URL || 'https://powerlerr.ankitgupta.com.np/4/api';
-const TORRSERVER_URL = process.env.TORRSERVER_URL || 'http://127.0.0.1:8090';
+const TORRSERVER_URL = process.env.TORRSERVER_URL || 'https://torrserver.ankitgupta.com.np';
 
 // Extract the base domain (origin) from TORZNAB_BASE_URL to dynamically build all indexer endpoints
 const getProwlarrBaseUrl = () => {
@@ -1078,13 +1078,17 @@ app.get('/api/search/stream', async (req, res) => {
   const activeScrapers = [];
 
   const addScraper = (promise, sourceName) => {
-    const wrappedPromise = promise.then(results => {
-      if (results && results.length > 0) {
-        res.write(`data: ${JSON.stringify({ source: sourceName, torrents: results })}\n\n`);
-      }
-    }).catch(err => {
-      console.error(`SSE Scraper Error (${sourceName}):`, err.message);
-    });
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
+    const wrappedPromise = Promise.race([promise, timeoutPromise])
+      .then(results => {
+        if (results && results.length > 0) {
+          res.write(`data: ${JSON.stringify({ source: sourceName, torrents: results })}\n\n`);
+        }
+      }).catch(err => {
+        if (err.message !== 'Timeout') {
+          console.error(`SSE Scraper Error (${sourceName}):`, err.message);
+        }
+      });
     activeScrapers.push(wrappedPromise);
   };
 
@@ -1093,6 +1097,10 @@ app.get('/api/search/stream', async (req, res) => {
       addScraper(searchYTSGGDirect(q), 'YTS.gg (Direct)');
     } else if (id === 4) {
       addScraper(searchNyaaDirect(q), 'Nyaa.si');
+    } else if (id === 2) {
+      addScraper(searchPirateBayDirect(q), 'The Pirate Bay');
+    } else if (id === 5) {
+      addScraper(searchEZTVxToDirect(q), 'EZTVx.to');
     } else if (INDEXERS[id]) {
       addScraper(searchIndexer(id, q, ''), INDEXERS[id].name);
     }
@@ -1155,6 +1163,10 @@ app.get('/api/search', async (req, res) => {
         queryPromises.push(withTimeout(searchYTSGGDirect(q), 'YTS.gg'));
       } else if (id === 4) {
         queryPromises.push(withTimeout(searchNyaaDirect(q), 'Nyaa.si'));
+      } else if (id === 2) {
+        queryPromises.push(withTimeout(searchPirateBayDirect(q), 'The Pirate Bay'));
+      } else if (id === 5) {
+        queryPromises.push(withTimeout(searchEZTVxToDirect(q), 'EZTVx.to'));
       } else if (INDEXERS[id]) {
         queryPromises.push(withTimeout(searchIndexer(id, q, ''), INDEXERS[id].name));
       }
