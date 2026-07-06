@@ -2005,6 +2005,16 @@ ul, ol {
   --plyr-color-main: #10b981;
 }
 
+/* Ensure full screen ignores max-height constraints */
+.plyr.plyr--fullscreen-active {
+  max-height: none !important;
+}
+
+.plyr.plyr--fullscreen-active .video-player {
+  max-height: none !important;
+  height: 100% !important;
+}
+
 ::cue {
   background-color: rgba(0, 0, 0, 0.8);
   color: white;
