@@ -161,14 +161,14 @@ async function searchYTSGGDirect(query) {
     const path = `/api/v2/list_movies.json?query_term=${encodeURIComponent(query)}&limit=20`;
     const mirrorResult = await fetchFromMirrors('yts', path, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
-    }, true);
+    }, false);
 
     if (!mirrorResult.ok) return items;
 
     let jsonText = mirrorResult.text;
     const preMatch = jsonText.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
     if (preMatch) jsonText = preMatch[1];
-    
+
     // Also remove HTML tags if any slipped through (FlareSolverr wrapper)
     jsonText = jsonText.replace(/<[^>]+>/g, '').trim();
 
@@ -211,10 +211,10 @@ async function searchEZTVxToDirect(query) {
     const path = `/search/${encodeURIComponent(query)}`;
     const mirrorResult = await fetchFromMirrors('eztv', path, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-    }, true);
+    }, false);
 
     if (!mirrorResult.ok) return items;
-    
+
     const html = mirrorResult.text;
     const workingDomain = mirrorResult.domain;
 
@@ -310,7 +310,7 @@ async function search1337xDirect(query) {
     const path = `/search/${encodeURIComponent(query)}/1/`;
     const mirrorResult = await fetchFromMirrors('1337x', path, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-    }, true);
+    }, false);
 
     if (mirrorResult.ok) {
       const html = mirrorResult.text;
@@ -318,41 +318,41 @@ async function search1337xDirect(query) {
 
       const altRegex = /<tr[^>]*>[\s\S]*?<a[^>]*href="\/torrent\/(\d+)\/[^"]*"[^>]*>([^<]*)<\/a>[\s\S]*?<td[^>]*>([\d.]+[KMG]B?)<\/td>[\s\S]*?<td[^>]*>(\d+)<\/td>[\s\S]*?<td[^>]*>(\d+)<\/td>/gi;
       const matches = [];
-        let match;
-        while ((match = altRegex.exec(html)) !== null && matches.length < 10) {
-          matches.push(match);
+      let match;
+      while ((match = altRegex.exec(html)) !== null && matches.length < 10) {
+        matches.push(match);
+      }
+
+      const promises = matches.map(async (m) => {
+        const torrentId = m[1];
+        const title = m[2].trim();
+        const sizeStr = m[3].trim();
+        const seeders = parseInt(m[4]) || 0;
+        const leechers = parseInt(m[5]) || 0;
+
+        const sizeBytes = parseSize(sizeStr);
+        const magnet = await get1337xMagnet(torrentId, workingDomain);
+
+        if (magnet) {
+          return {
+            title,
+            magnet: magnet + getTrackerParams(),
+            torrentUrl: `https://${workingDomain}/torrent/${torrentId}/`,
+            size: sizeBytes,
+            seeders,
+            leechers,
+            pubDate: new Date().toISOString(),
+            source: '1337x',
+            guid: torrentId
+          };
         }
+        return null;
+      });
 
-        const promises = matches.map(async (m) => {
-          const torrentId = m[1];
-          const title = m[2].trim();
-          const sizeStr = m[3].trim();
-          const seeders = parseInt(m[4]) || 0;
-          const leechers = parseInt(m[5]) || 0;
-
-          const sizeBytes = parseSize(sizeStr);
-          const magnet = await get1337xMagnet(torrentId, workingDomain);
-
-          if (magnet) {
-            return {
-              title,
-              magnet: magnet + getTrackerParams(),
-              torrentUrl: `https://${workingDomain}/torrent/${torrentId}/`,
-              size: sizeBytes,
-              seeders,
-              leechers,
-              pubDate: new Date().toISOString(),
-              source: '1337x',
-              guid: torrentId
-            };
-          }
-          return null;
-        });
-
-        const results = await Promise.all(promises);
-        results.forEach(r => {
-          if (r) items.push(r);
-        });
+      const results = await Promise.all(promises);
+      results.forEach(r => {
+        if (r) items.push(r);
+      });
     }
   } catch (error) {
     console.error('Error searching 1337x:', error.message);
@@ -542,7 +542,7 @@ async function searchNyaaDirect(query) {
     const path = `/?page=rss&q=${encodeURIComponent(query)}`;
     const mirrorResult = await fetchFromMirrors('nyaa', path, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
-    }, true);
+    }, false);
 
     if (!mirrorResult.ok) return [];
 
@@ -613,10 +613,10 @@ async function searchPirateBayDirect(query) {
     let results;
     try {
       results = JSON.parse(text);
-    } catch(err) {
+    } catch (err) {
       return []; // Return empty if apibay returns HTML/502 Error
     }
-    
+
     if (!Array.isArray(results) || results.length === 0 || results[0].name === 'No results found') {
       return [];
     }
@@ -661,7 +661,7 @@ async function searchProwlarrGlobal(query, indexerIdsList = '') {
 
   try {
     const response = await fetch(`${url}?${params}`);
-    const results = await response.json();
+    const text = await response.text(); let results; try { results = JSON.parse(text); } catch (err) { return []; }
     if (!Array.isArray(results)) return [];
 
     return results.map(item => {
@@ -961,7 +961,7 @@ async function getTrendingTMDB(mediaType = 'movie', timeWindow = 'week') {
       const data = await response.json();
       return data.results || [];
     };
-    
+
     // Fetch 3 pages to get 60 items
     const [p1, p2, p3] = await Promise.all([fetchPage(1), fetchPage(2), fetchPage(3)]);
     return [...p1, ...p2, ...p3];
@@ -1059,7 +1059,7 @@ async function getTMDBDetail(id, type) {
 
   try {
     const response = await fetch(
-      `https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=videos,credits`
+      `https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=videos,credits,external_ids`
     );
     return await response.json();
   } catch (error) {
@@ -1636,8 +1636,8 @@ app.post('/api/webtorrent/add', async (req, res) => {
       torrent = client.add(magnet, (t) => {
         respondWithMetadata(t);
       });
-      console.log('client.add returned:', typeof torrent, torrent ? Object.keys(torrent).filter(k=>typeof torrent[k]==='function').join(',') : 'null');
-      
+      console.log('client.add returned:', typeof torrent, torrent ? Object.keys(torrent).filter(k => typeof torrent[k] === 'function').join(',') : 'null');
+
       if (torrent && typeof torrent.on === 'function') {
         torrent.on('error', (err) => {
           console.error('[WebTorrent Add] error:', err.message);

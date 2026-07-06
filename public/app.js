@@ -2149,7 +2149,8 @@ function renderFilteredTorrents(torrentsList, selectedSource, categoryType, epis
         type: categoryType,
         episodeNumber: episodeNum,
         seasonNumber: seasonNum,
-        id: state.selectedMedia?.id
+        id: state.selectedMedia?.id,
+        imdbId: state.selectedMedia?.details?.imdb_id || state.selectedMedia?.details?.external_ids?.imdb_id
       };
       playTorrent(torrent.title, torrent.magnet, mediaTrackingInfo);
     });
@@ -2552,6 +2553,51 @@ function openVideoPlayer(title, url, trackingInfo = {}) {
     document.getElementById('subtitleUpload').click();
   });
   actionsEl.appendChild(subBtn);
+
+  // Clear old subtitle tracks
+  Array.from(video.getElementsByTagName('track')).forEach(t => t.remove());
+
+  // Automatically fetch English subtitles from Stremio API if imdbId is provided
+  if (trackingInfo.imdbId) {
+    const fetchSubtitles = async () => {
+      try {
+        let apiUrl = `https://opensubtitles-v3.strem.io/subtitles/movie/${trackingInfo.imdbId}.json`;
+        if (trackingInfo.type === 'anime' || trackingInfo.seasonNumber) {
+          const s = trackingInfo.seasonNumber || 1;
+          const e = trackingInfo.episodeNumber || 1;
+          apiUrl = `https://opensubtitles-v3.strem.io/subtitles/series/${trackingInfo.imdbId}:${s}:${e}.json`;
+        }
+        
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        
+        if (data && data.subtitles && data.subtitles.length > 0) {
+          // Filter for English subtitles
+          const engSubs = data.subtitles.filter(sub => sub.lang === 'eng');
+          if (engSubs.length > 0) {
+            const bestSub = engSubs[0];
+            const track = document.createElement('track');
+            track.className = 'custom-subtitle-track';
+            track.kind = 'subtitles';
+            track.label = 'English (Auto)';
+            track.srclang = 'en';
+            track.src = bestSub.url;
+            track.default = true;
+            
+            video.appendChild(track);
+            
+            if (video.textTracks && video.textTracks.length > 0) {
+              video.textTracks[video.textTracks.length - 1].mode = 'showing';
+            }
+            showToast('Auto-loaded English subtitles', 'info');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to auto-fetch subtitles:', err);
+      }
+    };
+    fetchSubtitles();
+  }
 
   // Smooth scroll to the player
   modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
