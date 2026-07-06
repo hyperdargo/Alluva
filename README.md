@@ -4,7 +4,7 @@
 <div align="center">
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.2-success.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-1.0.3-success.svg)](package.json)
 [![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)](#)
 
