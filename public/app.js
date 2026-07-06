@@ -265,6 +265,15 @@ function parseQuality(title) {
   return 'SD';
 }
 
+function parseExtension(title) {
+  title = title.toLowerCase();
+  if (title.includes('.mp4') || title.includes(' mp4')) return 'MP4';
+  if (title.includes('.mkv') || title.includes(' mkv')) return 'MKV';
+  if (title.includes('.avi') || title.includes(' avi')) return 'AVI';
+  if (title.includes('.webm')) return 'WEBM';
+  return ''; 
+}
+
 function getPosterUrl(path, size = 'w500') {
   if (!path) return 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=500&auto=format&fit=crop';
   if (path.startsWith('http')) return path;
@@ -872,6 +881,7 @@ async function loadHomeView() {
           const itemCard = document.createElement('div');
           itemCard.className = 'torrent-item';
           const qual = parseQuality(item.title);
+          const ext = parseExtension(item.title);
           const sizeFormatted = formatBytes(item.size);
 
           itemCard.innerHTML = `
@@ -879,6 +889,7 @@ async function loadHomeView() {
               <h4 class="torrent-title" title="${item.title}">${item.title}</h4>
               <div class="torrent-meta">
                 <span class="torrent-quality">${qual}</span>
+                ${ext ? `<span class="torrent-quality">${ext}</span>` : ''}
                 <span class="torrent-size">${sizeFormatted}</span>
                 <span class="torrent-seeders">⬆ ${item.seeders}</span>
                 <span>${item.source}</span>
@@ -2071,12 +2082,14 @@ function renderFilteredTorrents(torrentsList, selectedSource, categoryType, epis
     item.className = 'torrent-item';
     const sizeFormatted = formatBytes(torrent.size);
     const quality = parseQuality(torrent.title);
+    const extension = parseExtension(torrent.title);
 
     item.innerHTML = `
       <div class="torrent-info">
         <h4 class="torrent-title" title="${torrent.title}">${torrent.title}</h4>
         <div class="torrent-meta">
           <span class="torrent-quality">${quality}</span>
+          ${extension ? `<span class="torrent-quality">${extension}</span>` : ''}
           <span class="torrent-size">${sizeFormatted}</span>
           <span class="torrent-seeders">⬆ ${torrent.seeders}</span>
           <span>${torrent.source}</span>
