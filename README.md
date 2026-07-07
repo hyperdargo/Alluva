@@ -4,7 +4,7 @@
 <div align="center">
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.3-success.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-1.0.4-success.svg)](package.json)
 [![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)](#)
 
@@ -24,6 +24,16 @@
 ```
 
 </div>
+
+---
+
+## ✨ What's New in v1.0.4?
+
+- **Infinite Scrolling**: Replaced the static "Load More" buttons with a seamless infinite scroll mechanism across the Anime, Movies, and TV Shows grids, dynamically fetching the next page as you browse.
+- **Optimized Dashboard Performance**: Capped the featured lists (Trending, Top Rated, Upcoming) on the Home view to 16 items each, significantly improving initial load times and overall UI responsiveness.
+- **18+ Content Safe Search**: Added a global setting to enable/disable 18+ content across TMDB and AniList searches, defaulting to Safe Search (Off).
+- **Hentai Genre Filter**: Introduced a hidden Hentai genre filter in the Anime view that dynamically appears only when 18+ content is enabled.
+- **Robust API Error Handling**: Fixed a critical bug in the search backend where missing TMDB results or missing AniList image/title data would crash the application or UI.
 
 ---
 
@@ -283,7 +293,7 @@ If you find Stream Vault helpful, please:
 
 ### Made with ❤️ for the Media Streaming Community
 
-**© copyright by DTEmpire (DargoTamber) | version 1.0.2**
+**© copyright by DTEmpire (DargoTamber) | version 1.0.4**
 
 ```text
 █████████████████████████████████████████████

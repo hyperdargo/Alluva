@@ -32,7 +32,8 @@ const state = {
     vlcPath: '', // Custom VLC path
     vlcArgs: '', // Custom VLC arguments
     mpvPath: '', // Custom MPV path
-    mpvArgs: '' // Custom MPV arguments
+    mpvArgs: '', // Custom MPV arguments
+    enableAdultContent: false // 18+ content toggle
   },
   continueWatching: [],
   torrserverUrl: 'https://torrserver.ankitgupta.com.np',
@@ -40,11 +41,17 @@ const state = {
   lastTorrentCategory: null,
   lastTorrentEpisode: null,
   lastTorrentSeason: null,
-  vlcExtensionId: 'ihpiinojhnfhpdmmacgmpoonphhimkaj' // Open in VLC extension ID
+  vlcExtensionId: 'ihpiinojhnfhpdmmacgmpoonphhimkaj', // Open in VLC extension ID
+  sortWebRipFirst: false,
+  plyrInstance: null,
+  currentPage: 1,
+  isLoadingPage: false,
+  currentCategory: null,
+  currentFilters: {}
 };
 
 // ==========================================================================
-// Dynamic Library Loaders
+// Dynamic Library Loaders\
 // ==========================================================================
 
 function loadScript(url) {
@@ -76,11 +83,11 @@ async function initHls() {
 async function openInLocalPlayer(player, url, title = 'Stream') {
   showToast(`Launching ${player.toUpperCase()}...`, 'info');
   try {
-    const path = player === 'vlc' 
-      ? (state.preferences.vlcPath || '') 
+    const path = player === 'vlc'
+      ? (state.preferences.vlcPath || '')
       : (state.preferences.mpvPath || '');
-    const args = player === 'vlc' 
-      ? (state.preferences.vlcArgs || '') 
+    const args = player === 'vlc'
+      ? (state.preferences.vlcArgs || '')
       : (state.preferences.mpvArgs || '');
 
     const res = await fetch('/api/play/local', {
@@ -263,6 +270,26 @@ function parseQuality(title) {
   const match = title.match(/(\d{3,4})p/);
   if (match) return match[0];
   return 'SD';
+}
+
+function parseExtension(title) {
+  title = title.toLowerCase();
+  if (title.includes('.mp4') || title.includes(' mp4')) return 'MP4';
+  if (title.includes('.mkv') || title.includes(' mkv')) return 'MKV';
+  if (title.includes('.avi') || title.includes(' avi')) return 'AVI';
+  if (title.includes('.webm')) return 'WEBM';
+  return '';
+}
+
+function parseSourceType(title) {
+  title = title.toLowerCase();
+  if (title.includes('web-dl') || title.includes('webdl')) return 'WEB-DL';
+  if (title.includes('webrip') || title.includes(' web ')) return 'WEBRip';
+  if (title.includes('remux')) return 'Remux';
+  if (title.includes('bluray') || title.includes('blu-ray') || title.includes('bdrip') || title.includes('brrip')) return 'BluRay';
+  if (title.includes('hdts') || title.includes(' telesync ') || title.includes(' ts ')) return 'HDTS';
+  if (title.includes('camrip') || title.includes(' cam ')) return 'CAM';
+  return '';
 }
 
 function getPosterUrl(path, size = 'w500') {
@@ -535,7 +562,7 @@ function renderHeroBanner(featuredList) {
 
   const dotsContainer = document.createElement('div');
   dotsContainer.className = 'hero-controls';
-  
+
   const dotsDiv = document.createElement('div');
   dotsDiv.className = 'hero-dots';
   dotsContainer.appendChild(dotsDiv);
@@ -654,7 +681,7 @@ async function loadSearchView(query) {
   const animeSection = document.getElementById('searchAnimeSection');
   const mediaSection = document.getElementById('searchMediaSection');
   const noResults = document.getElementById('searchNoResults');
-  
+
   const animeGrid = document.getElementById('searchAnimeGrid');
   const mediaGrid = document.getElementById('searchMediaGrid');
 
@@ -665,7 +692,7 @@ async function loadSearchView(query) {
   setLoading(true);
   try {
     const selectedIndexers = state.preferences.selectedIndexers.join(',');
-    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&indexers=${selectedIndexers}&type=all`);
+    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&indexers=${selectedIndexers}&type=all&adult=${state.preferences.enableAdultContent}`);
     const data = await res.json();
 
     let hasAnime = data.anime && data.anime.length > 0;
@@ -713,9 +740,9 @@ function createMediaCard(item, type) {
 
   if (type === 'anime') {
     id = item.id;
-    title = item.title.english || item.title.romaji || item.title.native;
+    title = item.title ? (item.title.english || item.title.romaji || item.title.native) : 'Unknown Title';
     rating = item.averageScore ? (item.averageScore / 10).toFixed(1) : 'N/A';
-    poster = item.coverImage.large || item.coverImage.medium;
+    poster = item.coverImage ? (item.coverImage.large || item.coverImage.medium) : '';
   } else if (type === 'movie' || type === 'tv') {
     id = item.id;
     title = type === 'movie' ? (item.title || item.original_title) : (item.name || item.original_name);
@@ -823,7 +850,7 @@ async function loadHomeView() {
   const upcomingAnimeGrid = document.getElementById('upcomingAnimeGrid');
   const torrentsGrid = document.getElementById('recentTorrentsGrid');
 
-  const fillSkeletons = (el, count = 18) => {
+  const fillSkeletons = (el, count = 16) => {
     if (el) el.innerHTML = Array(count).fill('<div class="media-card poster-card skeleton"></div>').join('');
   };
 
@@ -837,7 +864,7 @@ async function loadHomeView() {
   fillSkeletons(torrentsGrid);
 
   try {
-    const res = await fetch('/api/trending');
+    const res = await fetch(`/api/trending?adult=${state.preferences.enableAdultContent}`);
     const data = await res.json();
 
     // Render Hero Banner
@@ -849,7 +876,7 @@ async function loadHomeView() {
       if (!grid) return;
       grid.innerHTML = '';
       if (items && items.length > 0) {
-        items.slice(0, 18).forEach(item => {
+        items.slice(0, 16).forEach(item => {
           grid.appendChild(createMediaCard(item, type));
         });
       } else {
@@ -868,10 +895,11 @@ async function loadHomeView() {
     if (torrentsGrid) {
       torrentsGrid.innerHTML = '';
       if (data.torrents && data.torrents.length > 0) {
-        data.torrents.slice(0, 18).forEach(item => {
+        data.torrents.slice(0, 16).forEach(item => {
           const itemCard = document.createElement('div');
           itemCard.className = 'torrent-item';
           const qual = parseQuality(item.title);
+          const ext = parseExtension(item.title);
           const sizeFormatted = formatBytes(item.size);
 
           itemCard.innerHTML = `
@@ -879,6 +907,7 @@ async function loadHomeView() {
               <h4 class="torrent-title" title="${item.title}">${item.title}</h4>
               <div class="torrent-meta">
                 <span class="torrent-quality">${qual}</span>
+                ${ext ? `<span class="torrent-quality">${ext}</span>` : ''}
                 <span class="torrent-size">${sizeFormatted}</span>
                 <span class="torrent-seeders">⬆ ${item.seeders}</span>
                 <span>${item.source}</span>
@@ -935,55 +964,115 @@ function populateYearFilters(selectId) {
   }
 }
 
-async function loadAnimeView() {
+async function loadAnimeView(page = 1) {
   const grid = document.getElementById('animeGrid');
-  grid.innerHTML = Array(50).fill('<div class="media-card poster-card skeleton"></div>').join('');
+  if (page === 1) {
+    grid.innerHTML = Array(20).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    state.currentPage = 1;
+    state.currentCategory = 'anime';
+  } else {
+    const skeletonHTML = Array(10).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    grid.insertAdjacentHTML('beforeend', skeletonHTML);
+    state.currentPage = page;
+  }
 
+  state.isLoadingPage = true;
   populateYearFilters('animeYearFilter');
 
+  const searchString = document.getElementById('searchInput').value.trim();
   const season = document.getElementById('animeSeasonFilter').value;
   const year = document.getElementById('animeYearFilter').value;
   const status = document.getElementById('animeStatusFilter').value;
+  const genre = document.getElementById('animeGenreFilter').value;
 
   try {
-    const searchString = document.getElementById('searchInput').value.trim();
-    let data;
+    let url = '';
+
     if (searchString) {
+      if (page > 1) { state.isLoadingPage = false; return; }
       const selectedIndexers = state.preferences.selectedIndexers.join(',');
-      const res = await fetch(`/api/search?type=anime&indexers=${selectedIndexers}&q=${encodeURIComponent(searchString)}`);
-      data = await res.json();
+      url = `/api/search?type=anime&indexers=${selectedIndexers}&q=${encodeURIComponent(searchString)}&adult=${state.preferences.enableAdultContent}`;
     } else {
-      const res = await fetch('/api/trending');
-      const trending = await res.json();
-      data = { anime: trending.anime || [] };
+      url = `/api/discover?type=anime&page=${page}&adult=${state.preferences.enableAdultContent}`;
+      if (year) url += `&year=${year}`;
+      if (genre) url += `&genre=${encodeURIComponent(genre)}`;
     }
 
-    grid.innerHTML = '';
-    if (data.anime && data.anime.length > 0) {
-      let filtered = data.anime;
-      if (season) filtered = filtered.filter(item => item.season === season);
-      if (year) filtered = filtered.filter(item => item.startDate?.year == year);
-      if (status) filtered = filtered.filter(item => item.status === status);
+    const res = await fetch(url);
+    const data = await res.json();
+    let items = searchString ? data.anime : data.media;
 
-      if (filtered.length > 0) {
-        filtered.forEach(item => {
-          grid.appendChild(createMediaCard(item, 'anime'));
-        });
+    if (page === 1) {
+      grid.innerHTML = '';
+    } else {
+      const skeletons = grid.querySelectorAll('.skeleton');
+      skeletons.forEach(s => s.remove());
+    }
+
+    if (items && items.length > 0) {
+      let filtered = items;
+      if (searchString) {
+        if (season) filtered = filtered.filter(item => item.season === season);
+        if (year) filtered = filtered.filter(item => item.startDate?.year == year);
+        if (status) filtered = filtered.filter(item => item.status === status);
       } else {
+        // API already filters year, so just filter status/season client side if needed
+        if (season) filtered = filtered.filter(item => item.season === season);
+        if (status) filtered = filtered.filter(item => item.status === status);
+      }
+
+      filtered.forEach(item => {
+        grid.appendChild(createMediaCard(item, 'anime'));
+      });
+
+      if (!searchString && items.length > 0) {
+        observeLastItem(grid, 'anime');
+      }
+
+      if (filtered.length === 0 && page === 1) {
         grid.innerHTML = '<div class="empty-state"><h3>No matches found</h3><p>Try modifying your filters.</p></div>';
       }
-    } else {
+    } else if (page === 1) {
       grid.innerHTML = '<div class="empty-state"><h3>No results</h3><p>Could not fetch anime data.</p></div>';
     }
   } catch (err) {
-    grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to retrieve anime.</p></div>';
+    if (page === 1) grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to retrieve anime.</p></div>';
+  }
+  state.isLoadingPage = false;
+}
+
+function observeLastItem(grid, type) {
+  const observer = new IntersectionObserver((entries, obs) => {
+    const last = entries[0];
+    if (last.isIntersecting && !state.isLoadingPage) {
+      obs.disconnect();
+      const nextPage = state.currentPage + 1;
+
+      if (type === 'movies') loadMoviesView(nextPage);
+      else if (type === 'tv') loadTVView(nextPage);
+      else if (type === 'anime') loadAnimeView(nextPage);
+    }
+  }, { rootMargin: '200px' });
+
+  const lastElement = grid.lastElementChild;
+  if (lastElement) {
+    observer.observe(lastElement);
   }
 }
 
-async function loadMoviesView() {
+async function loadMoviesView(page = 1) {
   const grid = document.getElementById('moviesGrid');
-  grid.innerHTML = Array(50).fill('<div class="media-card poster-card skeleton"></div>').join('');
+  if (page === 1) {
+    grid.innerHTML = Array(20).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    state.currentPage = 1;
+    state.currentCategory = 'movies';
+  } else {
+    const skeletonHTML = Array(10).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    grid.insertAdjacentHTML('beforeend', skeletonHTML);
+    state.currentPage = page;
+  }
 
+  state.isLoadingPage = true;
   populateYearFilters('movieYearFilter');
 
   const year = document.getElementById('movieYearFilter').value;
@@ -992,50 +1081,73 @@ async function loadMoviesView() {
   try {
     const searchString = document.getElementById('searchInput').value.trim();
     let url = '';
+
+    // Search is handled client-side without infinite scroll currently
     if (searchString) {
-      url = `/api/search?type=movie&q=${encodeURIComponent(searchString)}`;
+      if (page > 1) { state.isLoadingPage = false; return; }
+      url = `/api/search?type=movie&q=${encodeURIComponent(searchString)}&adult=${state.preferences.enableAdultContent}`;
     } else {
-      url = '/api/trending';
+      url = `/api/discover?type=movie&page=${page}&adult=${state.preferences.enableAdultContent}`;
+      if (year) url += `&year=${year}`;
+      if (genre) url += `&genre=${genre}`;
     }
 
     const res = await fetch(url);
     const data = await res.json();
-    let items = searchString ? data.media : data.movies;
+    let items = searchString ? data.media : data.media;
 
-    grid.innerHTML = '';
+    if (page === 1) {
+      grid.innerHTML = '';
+    } else {
+      const skeletons = grid.querySelectorAll('.skeleton');
+      skeletons.forEach(s => s.remove());
+    }
+
     if (items && items.length > 0) {
-      let filtered = items.filter(item => !item.media_type || item.media_type === 'movie');
-      if (year) {
-        filtered = filtered.filter(item => {
-          const release = item.release_date || '';
-          return release.startsWith(year);
-        });
-      }
-      populateGenres(items, 'movieGenreFilter');
-
-      if (genre) {
-        filtered = filtered.filter(item => item.genre_ids && item.genre_ids.includes(parseInt(genre)));
+      let filtered = items;
+      if (searchString) {
+        filtered = filtered.filter(item => !item.media_type || item.media_type === 'movie');
+        if (year) filtered = filtered.filter(item => (item.release_date || '').startsWith(year));
+        if (genre) filtered = filtered.filter(item => item.genre_ids && item.genre_ids.includes(parseInt(genre)));
       }
 
-      if (filtered.length > 0) {
-        filtered.forEach(item => {
-          grid.appendChild(createMediaCard(item, 'movie'));
-        });
-      } else {
+      if (page === 1 && !searchString) {
+        populateGenres(items, 'movieGenreFilter');
+      }
+
+      filtered.forEach(item => {
+        grid.appendChild(createMediaCard(item, 'movie'));
+      });
+
+      if (!searchString && items.length > 0) {
+        observeLastItem(grid, 'movies');
+      }
+
+      if (filtered.length === 0 && page === 1) {
         grid.innerHTML = '<div class="empty-state"><h3>No matches</h3><p>Try resetting filters.</p></div>';
       }
-    } else {
+    } else if (page === 1) {
       grid.innerHTML = '<div class="empty-state"><h3>No Movies</h3><p>Configure your TMDB API Key in environment.</p></div>';
     }
   } catch (err) {
-    grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to connect to TMDB.</p></div>';
+    if (page === 1) grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to connect to TMDB.</p></div>';
   }
+  state.isLoadingPage = false;
 }
 
-async function loadTVView() {
+async function loadTVView(page = 1) {
   const grid = document.getElementById('tvGrid');
-  grid.innerHTML = Array(50).fill('<div class="media-card poster-card skeleton"></div>').join('');
+  if (page === 1) {
+    grid.innerHTML = Array(20).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    state.currentPage = 1;
+    state.currentCategory = 'tv';
+  } else {
+    const skeletonHTML = Array(10).fill('<div class="media-card poster-card skeleton"></div>').join('');
+    grid.insertAdjacentHTML('beforeend', skeletonHTML);
+    state.currentPage = page;
+  }
 
+  state.isLoadingPage = true;
   populateYearFilters('tvYearFilter');
 
   const year = document.getElementById('tvYearFilter').value;
@@ -1044,49 +1156,64 @@ async function loadTVView() {
   try {
     const searchString = document.getElementById('searchInput').value.trim();
     let url = '';
+
     if (searchString) {
-      url = `/api/search?type=tv&q=${encodeURIComponent(searchString)}`;
+      if (page > 1) { state.isLoadingPage = false; return; }
+      url = `/api/search?type=tv&q=${encodeURIComponent(searchString)}&adult=${state.preferences.enableAdultContent}`;
     } else {
-      url = '/api/trending';
+      url = `/api/discover?type=tv&page=${page}&adult=${state.preferences.enableAdultContent}`;
+      if (year) url += `&year=${year}`;
+      if (genre) url += `&genre=${genre}`;
     }
 
     const res = await fetch(url);
     const data = await res.json();
-    let items = searchString ? data.media : data.tv;
+    let items = searchString ? data.media : data.media;
 
-    grid.innerHTML = '';
+    if (page === 1) {
+      grid.innerHTML = '';
+    } else {
+      const skeletons = grid.querySelectorAll('.skeleton');
+      skeletons.forEach(s => s.remove());
+    }
+
     if (items && items.length > 0) {
-      let filtered = items.filter(item => !item.media_type || item.media_type === 'tv');
-      if (year) {
-        filtered = filtered.filter(item => {
-          const release = item.first_air_date || '';
-          return release.startsWith(year);
-        });
-      }
-      populateGenres(items, 'tvGenreFilter');
-
-      if (genre) {
-        filtered = filtered.filter(item => item.genre_ids && item.genre_ids.includes(parseInt(genre)));
+      let filtered = items;
+      if (searchString) {
+        filtered = filtered.filter(item => !item.media_type || item.media_type === 'tv');
+        if (year) filtered = filtered.filter(item => (item.first_air_date || '').startsWith(year));
+        if (genre) filtered = filtered.filter(item => item.genre_ids && item.genre_ids.includes(parseInt(genre)));
       }
 
-      if (filtered.length > 0) {
-        filtered.forEach(item => {
-          grid.appendChild(createMediaCard(item, 'tv'));
-        });
-      } else {
+      if (page === 1 && !searchString) {
+        populateGenres(items, 'tvGenreFilter');
+      }
+
+      filtered.forEach(item => {
+        grid.appendChild(createMediaCard(item, 'tv'));
+      });
+
+      if (!searchString && items.length > 0) {
+        observeLastItem(grid, 'tv');
+      }
+
+      if (filtered.length === 0 && page === 1) {
         grid.innerHTML = '<div class="empty-state"><h3>No matches</h3><p>Try resetting filters.</p></div>';
       }
-    } else {
+    } else if (page === 1) {
       grid.innerHTML = '<div class="empty-state"><h3>No TV Shows</h3><p>Configure your TMDB API Key in environment.</p></div>';
     }
   } catch (err) {
-    grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to connect to TMDB.</p></div>';
+    if (page === 1) grid.innerHTML = '<div class="error-state"><h3>Error loading</h3><p>Failed to connect to TMDB.</p></div>';
   }
+  state.isLoadingPage = false;
 }
 
 function populateGenres(items, selectId) {
   const select = document.getElementById(selectId);
-  if (!select || select.children.length > 1) return;
+  if (!select) return;
+  const existingOptions = select.querySelectorAll('option:not(.adult-genre)');
+  if (existingOptions.length > 1) return; // Already populated
 
   const TMDB_GENRES = {
     28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
@@ -1104,11 +1231,20 @@ function populateGenres(items, selectId) {
     }
   });
 
-  foundIds.forEach(id => {
-    if (TMDB_GENRES[id]) {
-      const opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = TMDB_GENRES[id];
+  const adultOption = select.querySelector('.adult-genre');
+  
+  const sortedGenres = Array.from(foundIds)
+    .map(id => ({ id, name: TMDB_GENRES[id] }))
+    .filter(g => g.name)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  sortedGenres.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g.id;
+    opt.textContent = g.name;
+    if (adultOption) {
+      select.insertBefore(opt, adultOption);
+    } else {
       select.appendChild(opt);
     }
   });
@@ -1288,6 +1424,24 @@ function loadSettingsView() {
     savePreferences();
     showToast(`Theme updated to ${e.target.value}`, 'success');
   };
+
+  const adultContentSetting = document.getElementById('adultContentSetting');
+  if (adultContentSetting) {
+    adultContentSetting.checked = state.preferences.enableAdultContent;
+    adultContentSetting.onchange = (e) => {
+      state.preferences.enableAdultContent = e.target.checked;
+      savePreferences();
+      showToast(e.target.checked ? '18+ content enabled' : '18+ content disabled', 'info');
+      
+      const adultGenres = document.querySelectorAll('.adult-genre');
+      adultGenres.forEach(el => {
+        el.style.display = state.preferences.enableAdultContent ? '' : 'none';
+      });
+
+      // Refresh home view if we are on it, or just let them navigate
+      if (state.currentView === 'home') loadHomeView();
+    };
+  }
 
   const playerSetting = document.getElementById('playerSetting');
   playerSetting.value = state.preferences.player;
@@ -1612,7 +1766,12 @@ function renderDetails(container, details, type) {
     </div>
     <div class="detail-section" id="torrentSearchSection" style="display: none;">
       <div style="display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3);">
-        <h3 class="detail-section-title" id="torrentSectionTitle" style="margin: 0; margin-bottom: var(--space-2);">Available Torrents</h3>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 class="detail-section-title" id="torrentSectionTitle" style="margin: 0;">Available Torrents</h3>
+          <label style="font-size: 14px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--color-text-secondary); background: var(--color-bg-tertiary); padding: 4px 10px; border-radius: 20px;">
+            <input type="checkbox" id="sortWebRipToggle" ${state.sortWebRipFirst ? 'checked' : ''}> ⭐ Prioritize WEBRip
+          </label>
+        </div>
         <div id="torrentProviderTabs" class="provider-tabs-container">
           <button class="provider-tab active" data-source="all">All Providers <span class="tab-count">0</span></button>
         </div>
@@ -1620,6 +1779,16 @@ function renderDetails(container, details, type) {
       <div class="torrents-list" id="torrentListGrid"></div>
     </div>
   `;
+
+  const sortToggle = document.getElementById('sortWebRipToggle');
+  if (sortToggle) {
+    sortToggle.addEventListener('change', (e) => {
+      state.sortWebRipFirst = e.target.checked;
+      // Re-render currently displayed torrents list by triggering the active tab again
+      const activeTab = document.querySelector('.provider-tab.active');
+      if (activeTab) activeTab.click();
+    });
+  }
 
   const headerActions = document.getElementById('detailHeaderActions');
   let youtubeKey = '';
@@ -1788,8 +1957,8 @@ function cleanAndFilterTorrents(torrents, categoryType, episodeNum, seasonNum) {
       releaseYear = parseInt(details.startDate.year);
     }
   } else {
-    targetTitle = state.selectedMedia?.type === 'movie' 
-      ? (details.title || details.original_title) 
+    targetTitle = state.selectedMedia?.type === 'movie'
+      ? (details.title || details.original_title)
       : (details.name || details.original_name);
     const dateStr = details.release_date || details.first_air_date || "";
     if (dateStr) {
@@ -1842,7 +2011,7 @@ function cleanAndFilterTorrents(torrents, categoryType, episodeNum, seasonNum) {
       if (/\bs\d+e\d+/i.test(title) || /\bseason\s*\d+/i.test(title) || /\bep\s*\d+/i.test(title)) {
         return false;
       }
-      
+
       // If we have a release year, filter out torrents that have a year and it does not match within +/- 1 year
       if (releaseYear) {
         const yearMatches = title.match(/\b(19\d\d|20\d\d)\b/g);
@@ -1861,7 +2030,7 @@ function cleanAndFilterTorrents(torrents, categoryType, episodeNum, seasonNum) {
       if (episodeNum !== null) {
         const epStr = String(episodeNum);
         const epPad = epStr.padStart(2, '0');
-        
+
         // Match patterns like E04, E4, Ep 4, - 04, etc.
         const epPatterns = [
           new RegExp(`\\be${epPad}\\b`, 'i'),
@@ -1874,11 +2043,11 @@ function cleanAndFilterTorrents(torrents, categoryType, episodeNum, seasonNum) {
           new RegExp(`\\b${epPad}\\b`),
           new RegExp(`\\b${epStr}\\b`)
         ];
-        
+
         const matchesEpisode = epPatterns.some(pattern => pattern.test(torrent.title));
         if (!matchesEpisode) return false;
       }
-      
+
       if (seasonNum !== null) {
         const sStr = String(seasonNum);
         const sPad = sStr.padStart(2, '0');
@@ -1938,7 +2107,7 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
 
   try {
     let indexersToUse = [...state.preferences.selectedIndexers];
-    
+
     // Context-aware indexer filtering based on media type
     if (categoryType === 'anime') {
       // For anime, use Nyaa (4) and general indexers, but remove movie/tv specific ones
@@ -1955,13 +2124,13 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
 
     const selectedIndexers = indexersToUse.join(',');
     const stream = new EventSource(`/api/search/stream?q=${encodeURIComponent(query)}&indexers=${selectedIndexers}`);
-    
+
     let torrentsList = [];
     let hasReceivedResults = false;
 
     stream.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
+
       if (data.done) {
         stream.close();
         if (torrentsList.length === 0) {
@@ -1989,8 +2158,8 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
             targetTitle = details.title?.english || details.title?.romaji || '';
             if (details.startDate?.year) releaseYear = parseInt(details.startDate.year);
           } else {
-            targetTitle = state.selectedMedia?.type === 'movie' 
-              ? (details.title || details.original_title || '') 
+            targetTitle = state.selectedMedia?.type === 'movie'
+              ? (details.title || details.original_title || '')
               : (details.name || details.original_name || '');
             const dateStr = details.release_date || details.first_air_date || '';
             if (dateStr) releaseYear = parseInt(dateStr.split('-')[0]);
@@ -2003,10 +2172,10 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
           if (tabsContainer) {
             const currentActive = tabsContainer.querySelector('.active');
             activeFilter = currentActive ? currentActive.dataset.source : 'all';
-            
+
             // Rebuild tabs
             tabsContainer.innerHTML = '';
-            
+
             // All Providers tab
             const allBtn = document.createElement('button');
             allBtn.className = `provider-tab ${activeFilter === 'all' ? 'active' : ''}`;
@@ -2059,7 +2228,17 @@ function renderFilteredTorrents(torrentsList, selectedSource, categoryType, epis
   grid.innerHTML = '';
 
   const filtered = (selectedSource === 'all' ? torrentsList : torrentsList.filter(t => t.source === selectedSource))
-    .sort((a, b) => (b.seeders || 0) - (a.seeders || 0));
+    .sort((a, b) => {
+      if (state.sortWebRipFirst) {
+        const typeA = parseSourceType(a.title);
+        const typeB = parseSourceType(b.title);
+        const aIsWeb = (typeA === 'WEBRip' || typeA === 'WEB-DL');
+        const bIsWeb = (typeB === 'WEBRip' || typeB === 'WEB-DL');
+        if (aIsWeb && !bIsWeb) return -1;
+        if (!aIsWeb && bIsWeb) return 1;
+      }
+      return (b.seeders || 0) - (a.seeders || 0);
+    });
 
   if (filtered.length === 0) {
     grid.innerHTML = `<div class="empty-state"><h3>No Torrents from "${selectedSource}"</h3><p>Try choosing a different provider.</p></div>`;
@@ -2071,12 +2250,16 @@ function renderFilteredTorrents(torrentsList, selectedSource, categoryType, epis
     item.className = 'torrent-item';
     const sizeFormatted = formatBytes(torrent.size);
     const quality = parseQuality(torrent.title);
+    const extension = parseExtension(torrent.title);
+    const sourceType = parseSourceType(torrent.title);
 
     item.innerHTML = `
       <div class="torrent-info">
         <h4 class="torrent-title" title="${torrent.title}">${torrent.title}</h4>
         <div class="torrent-meta">
           <span class="torrent-quality">${quality}</span>
+          ${sourceType ? `<span class="torrent-quality" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">${sourceType}</span>` : ''}
+          ${extension ? `<span class="torrent-quality">${extension}</span>` : ''}
           <span class="torrent-size">${sizeFormatted}</span>
           <span class="torrent-seeders">⬆ ${torrent.seeders}</span>
           <span>${torrent.source}</span>
@@ -2097,7 +2280,8 @@ function renderFilteredTorrents(torrentsList, selectedSource, categoryType, epis
         type: categoryType,
         episodeNumber: episodeNum,
         seasonNumber: seasonNum,
-        id: state.selectedMedia?.id
+        id: state.selectedMedia?.id,
+        imdbId: state.selectedMedia?.details?.imdb_id || state.selectedMedia?.details?.external_ids?.imdb_id
       };
       playTorrent(torrent.title, torrent.magnet, mediaTrackingInfo);
     });
@@ -2475,51 +2659,73 @@ function openVideoPlayer(title, url, trackingInfo = {}) {
   const modal = document.getElementById('playerModal');
   const video = document.getElementById('videoPlayer');
   const titleEl = document.getElementById('playerTitle');
-  const actionsEl = document.getElementById('playerActions');
 
-  modal.style.display = 'flex';
-  modal.style.position = 'fixed';
-  modal.style.top = '0';
-  modal.style.left = '0';
-  modal.style.right = '0';
-  modal.style.bottom = '0';
-  modal.style.zIndex = '1000';
-  modal.style.background = 'rgba(0,0,0,0.95)';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
+  modal.style.display = 'block';
+  modal.style.position = '';
+  modal.style.top = '';
+  modal.style.left = '';
+  modal.style.right = '';
+  modal.style.bottom = '';
+  modal.style.zIndex = '';
+  modal.style.background = '';
+  modal.style.alignItems = '';
+  modal.style.justifyContent = '';
 
   titleEl.textContent = title || 'Video Player';
-  actionsEl.innerHTML = '';
 
-  // Add VLC and MPV buttons to player controls
-  if (trackingInfo.magnet) {
-    const vlcBtn = document.createElement('button');
-    vlcBtn.className = 'player-action-btn vlc-btn';
-    vlcBtn.innerHTML = '🎬 Open in VLC';
-    vlcBtn.style.cssText = 'background: #4a90d9; border: none; color: #fff; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 4px;';
-    vlcBtn.addEventListener('click', () => {
-      openInLocalPlayer('vlc', url, title);
-    });
-    actionsEl.appendChild(vlcBtn);
+  // Clear old subtitle tracks
+  Array.from(video.getElementsByTagName('track')).forEach(t => t.remove());
 
-    const mpvBtn = document.createElement('button');
-    mpvBtn.className = 'player-action-btn mpv-btn';
-    mpvBtn.innerHTML = '🎬 Open in MPV';
-    mpvBtn.style.cssText = 'background: #55a630; border: none; color: #fff; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 4px;';
-    mpvBtn.addEventListener('click', () => {
-      openInLocalPlayer('mpv', url, title);
-    });
-    actionsEl.appendChild(mpvBtn);
+  // Automatically fetch English subtitles from Stremio API if imdbId is provided
+  if (trackingInfo.imdbId) {
+    const fetchSubtitles = async () => {
+      try {
+        let apiUrl = `https://opensubtitles-v3.strem.io/subtitles/movie/${trackingInfo.imdbId}.json`;
+        if (trackingInfo.type === 'anime' || trackingInfo.seasonNumber) {
+          const s = trackingInfo.seasonNumber || 1;
+          const e = trackingInfo.episodeNumber || 1;
+          apiUrl = `https://opensubtitles-v3.strem.io/subtitles/series/${trackingInfo.imdbId}:${s}:${e}.json`;
+        }
 
-    const copyBtn = document.createElement('button');
-    copyBtn.style.cssText = 'background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 4px;';
-    copyBtn.textContent = '📋 Copy Magnet';
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(trackingInfo.magnet);
-      showToast('Magnet copied to clipboard', 'success');
-    });
-    actionsEl.appendChild(copyBtn);
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+
+        if (data && data.subtitles && data.subtitles.length > 0) {
+          // Filter for English subtitles
+          const engSubs = data.subtitles.filter(sub => sub.lang === 'eng');
+          if (engSubs.length > 0) {
+            const bestSub = engSubs[0];
+            const track = document.createElement('track');
+            track.className = 'custom-subtitle-track';
+            track.kind = 'subtitles';
+            track.label = 'English (Auto)';
+            track.srclang = 'en';
+            track.src = bestSub.url;
+            track.default = true;
+
+            video.appendChild(track);
+
+            if (video.textTracks && video.textTracks.length > 0) {
+              video.textTracks[video.textTracks.length - 1].mode = 'showing';
+            }
+            if (state.plyrInstance) {
+              setTimeout(() => {
+                state.plyrInstance.captions.currentTrack = 0;
+                state.plyrInstance.captions.active = true;
+              }, 200);
+            }
+            showToast('Auto-loaded English subtitles', 'info');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to auto-fetch subtitles:', err);
+      }
+    };
+    fetchSubtitles();
   }
+
+  // Smooth scroll to the player
+  modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   video.removeAttribute('src');
   video.load();
@@ -2539,10 +2745,10 @@ function openVideoPlayer(title, url, trackingInfo = {}) {
         case 4: errorMsg = 'The video format or codec is not supported by your browser.'; break;
       }
     }
-    
+
     if (trackingInfo.magnet) {
       showToast(`${errorMsg} Try transcoded playback or external player.`, 'error');
-      
+
       const errorOverlay = document.createElement('div');
       errorOverlay.id = 'playerErrorOverlay';
       errorOverlay.style.cssText = 'position: absolute; inset: 0; background: rgba(20,20,40,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; z-index: 10; color: #fff;';
@@ -2557,12 +2763,12 @@ function openVideoPlayer(title, url, trackingInfo = {}) {
           <button class="btn btn-secondary" id="errorCopyMagnetBtn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: 500;">📋 Copy Magnet Link</button>
         </div>
       `;
-      
+
       const playerContainer = document.querySelector('.player-container');
       const existingOverlay = document.getElementById('playerErrorOverlay');
       if (existingOverlay) existingOverlay.remove();
       if (playerContainer) playerContainer.appendChild(errorOverlay);
-      
+
       errorOverlay.querySelector('#errorTranscodeBtn').addEventListener('click', () => {
         tryTranscodedPlayback();
       });
@@ -2584,11 +2790,11 @@ function openVideoPlayer(title, url, trackingInfo = {}) {
   const tryTranscodedPlayback = () => {
     const errorOverlay = document.getElementById('playerErrorOverlay');
     if (errorOverlay) errorOverlay.remove();
-    
+
     const transcodeUrl = `${state.torrserverUrl}/stream/video.m3u8?link=${trackingInfo.hash}&index=${trackingInfo.fileId || 0}&play`;
     console.log('Attempting transcoded playback:', transcodeUrl);
     showToast('Initializing TorrServer transcoding...', 'info');
-    
+
     initHls().then(Hls => {
       if (Hls.isSupported()) {
         if (state.hlsPlayer) {
@@ -3007,6 +3213,15 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPreferences();
   });
 
+  // Initialize Plyr
+  const videoEl = document.getElementById('videoPlayer');
+  if (videoEl && typeof Plyr !== 'undefined') {
+    state.plyrInstance = new Plyr(videoEl, {
+      captions: { active: true, update: true, language: 'auto' },
+      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen']
+    });
+  }
+
   // Initialize
   initNavigation();
   initSearch();
@@ -3022,11 +3237,20 @@ document.addEventListener('DOMContentLoaded', () => {
   bindFilter('animeSeasonFilter', loadAnimeView);
   bindFilter('animeYearFilter', loadAnimeView);
   bindFilter('animeStatusFilter', loadAnimeView);
+  bindFilter('animeGenreFilter', loadAnimeView);
+  
   bindFilter('movieYearFilter', loadMoviesView);
   bindFilter('movieGenreFilter', loadMoviesView);
+
   bindFilter('tvYearFilter', loadTVView);
   bindFilter('tvGenreFilter', loadTVView);
   bindFilter('scheduleTimezone', loadScheduleView);
+
+  // Update UI elements dependent on 18+ toggle
+  const adultGenres = document.querySelectorAll('.adult-genre');
+  adultGenres.forEach(el => {
+    el.style.display = state.preferences.enableAdultContent ? '' : 'none';
+  });
 
   // Check VLC status
   setTimeout(checkVLCInstalled, 2000);

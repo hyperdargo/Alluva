@@ -161,7 +161,7 @@ async function searchYTSGGDirect(query) {
     const path = `/api/v2/list_movies.json?query_term=${encodeURIComponent(query)}&limit=20`;
     const mirrorResult = await fetchFromMirrors('yts', path, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
-    }, true);
+    }, false);
 
     if (!mirrorResult.ok) return items;
 
@@ -211,7 +211,7 @@ async function searchEZTVxToDirect(query) {
     const path = `/search/${encodeURIComponent(query)}`;
     const mirrorResult = await fetchFromMirrors('eztv', path, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-    }, true);
+    }, false);
 
     if (!mirrorResult.ok) return items;
 
@@ -310,7 +310,7 @@ async function search1337xDirect(query) {
     const path = `/search/${encodeURIComponent(query)}/1/`;
     const mirrorResult = await fetchFromMirrors('1337x', path, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-    }, true);
+    }, false);
 
     if (mirrorResult.ok) {
       const html = mirrorResult.text;
@@ -542,7 +542,7 @@ async function searchNyaaDirect(query) {
     const path = `/?page=rss&q=${encodeURIComponent(query)}`;
     const mirrorResult = await fetchFromMirrors('nyaa', path, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
-    }, true);
+    }, false);
 
     if (!mirrorResult.ok) return [];
 
@@ -772,14 +772,21 @@ function parseTorznabItems(xml, sourceName) {
   return items;
 }
 
-// ============= AniList Search =============
-async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20) {
+// ============= AniList Search & Discover =============
+async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20, filters = {}, adult = false) {
   const hasSearch = query && query.trim().length > 0;
+  
+  let genreFilter = '';
+  let yearFilter = '';
+  let isAdultFilter = !adult ? ', isAdult: false' : '';
+  
+  if (filters.genre) genreFilter = ', genre: $genre';
+  if (filters.year) yearFilter = ', seasonYear: $year';
 
   const graphqlQuery = hasSearch ? `
-    query ($search: String, $type: MediaType, $page: Int, $perPage: Int) {
+    query ($search: String, $type: MediaType, $page: Int, $perPage: Int${filters.genre ? ', $genre: String' : ''}${filters.year ? ', $year: Int' : ''}) {
       Page(page: $page, perPage: $perPage) {
-        media(search: $search, type: $type, sort: [POPULARITY_DESC, SCORE_DESC]) {
+        media(search: $search, type: $type, sort: [POPULARITY_DESC, SCORE_DESC]${genreFilter}${yearFilter}${isAdultFilter}) {
           id
           title { romaji english native }
           coverImage { large medium }
@@ -800,9 +807,9 @@ async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20) {
       }
     }
   ` : `
-    query ($type: MediaType, $page: Int, $perPage: Int) {
+    query ($type: MediaType, $page: Int, $perPage: Int${filters.genre ? ', $genre: String' : ''}${filters.year ? ', $year: Int' : ''}) {
       Page(page: $page, perPage: $perPage) {
-        media(type: $type, sort: [POPULARITY_DESC, SCORE_DESC]) {
+        media(type: $type, sort: [POPULARITY_DESC, SCORE_DESC]${genreFilter}${yearFilter}${isAdultFilter}) {
           id
           title { romaji english native }
           coverImage { large medium }
@@ -824,9 +831,12 @@ async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20) {
     }
   `;
 
-  const variables = hasSearch
-    ? { search: query, type, page, perPage }
-    : { type, page, perPage };
+  const variables = { type, page, perPage };
+  if (hasSearch) variables.search = query;
+  
+  // AniList requires specific genre casing, but usually Title Case works.
+  if (filters.genre) variables.genre = filters.genre;
+  if (filters.year) variables.year = parseInt(filters.year);
 
   try {
     const response = await fetch('https://graphql.anilist.co', {
@@ -1016,11 +1026,12 @@ async function getTopRatedTMDB(mediaType = 'movie') {
 }
 
 // ============= Get upcoming anime from AniList =============
-async function getUpcomingAnime() {
+async function getUpcomingAnime(adult = false) {
+  const isAdultFilter = !adult ? ', isAdult: false' : '';
   const graphqlQuery = `
     query {
       Page(page: 1, perPage: 50) {
-        media(type: ANIME, status: NOT_YET_RELEASED, sort: POPULARITY_DESC) {
+        media(type: ANIME, status: NOT_YET_RELEASED, sort: POPULARITY_DESC${isAdultFilter}) {
           id
           title { romaji english native }
           coverImage { large medium }
@@ -1059,7 +1070,7 @@ async function getTMDBDetail(id, type) {
 
   try {
     const response = await fetch(
-      `https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=videos,credits`
+      `https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=videos,credits,external_ids`
     );
     return await response.json();
   } catch (error) {
@@ -1118,25 +1129,77 @@ app.get('/api/search/stream', async (req, res) => {
   });
 });
 
+// ============= Discover endpoint (Infinite Scroll & Filters) =============
+app.get('/api/discover', async (req, res) => {
+  const { type, page = 1, year, genre, adult } = req.query;
+  const pageNum = parseInt(page) || 1;
+  const isAdult = adult === 'true';
+
+  try {
+    if (type === 'anime') {
+      const filters = {};
+      if (year) filters.year = year;
+      if (genre) filters.genre = genre;
+      const anime = await searchAniList('', 'ANIME', pageNum, 20, filters, isAdult);
+      return res.json({ media: anime });
+    } else if (type === 'movie' || type === 'tv') {
+      if (!TMDB_API_KEY || TMDB_API_KEY === 'your_tmdb_key_here') {
+        return res.json({ media: [] });
+      }
+      
+      let url = `https://api.themoviedb.org/3/discover/${type}?api_key=${TMDB_API_KEY}&language=en-US&page=${pageNum}&sort_by=popularity.desc&include_adult=${isAdult}`;
+      if (year) {
+        url += type === 'movie' ? `&primary_release_year=${year}` : `&first_air_date_year=${year}`;
+      }
+      
+      if (genre) {
+        if (genre === 'adult') {
+          url += `&with_keywords=356759|325693`; // porn, erotica keywords
+        } else {
+          url += `&with_genres=${genre}`;
+        }
+      }
+
+      const response = await fetch(url);
+      const data = await response.json();
+      return res.json({ media: data.results || [] });
+    }
+    res.json({ media: [] });
+  } catch (error) {
+    console.error('Discover API Error:', error.message);
+    res.status(500).json({ error: 'Failed to discover media' });
+  }
+});
+
 // ============= Unified search endpoint =============
 app.get('/api/search', async (req, res) => {
-  const { q, indexers = '4', type = 'all' } = req.query;
+  const { type, q, indexers, adult } = req.query;
+  const isAdult = adult === 'true';
+  const indexerIds = (indexers || '4').split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
 
   if (!q || q.trim().length < 2) {
     return res.json({ anime: [], media: [], torrents: [] });
   }
 
-  const indexerIds = indexers.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
   const promises = [];
 
   // Anime search (AniList)
   if (type === 'all' || type === 'anime') {
-    promises.push(searchAniList(q, 'ANIME').then(anime => ({ type: 'anime', data: anime })));
+    promises.push(searchAniList(q, 'ANIME', 1, 20, {}, isAdult).then(anime => ({ type: 'anime', data: anime })));
   }
 
   // Movie/TV search (TMDB)
   if (type === 'all' || type === 'movie' || type === 'tv') {
-    promises.push(searchTMDB(q, 'multi').then(media => ({ type: 'media', data: media })));
+    if (TMDB_API_KEY && TMDB_API_KEY !== 'your_tmdb_key_here') {
+      const tmdbType = type === 'all' ? 'multi' : type;
+      const tmdbUrl = `https://api.themoviedb.org/3/search/${tmdbType}?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(q)}&page=1&include_adult=${isAdult}`;
+      promises.push(
+        fetch(tmdbUrl).then(res => res.json()).then(data => ({
+          type: 'media',
+          data: data.results || []
+        }))
+      );
+    }
   }
 
   // Scraper promise timeout wrapper to ensure slow/hung scrapers never block other results
@@ -1228,6 +1291,9 @@ app.get('/api/indexers', (req, res) => {
 
 // ============= Trending endpoint =============
 app.get('/api/trending', async (req, res) => {
+  const { adult } = req.query;
+  const isAdult = adult === 'true';
+
   try {
     const [
       trendingAnime,
@@ -1239,14 +1305,14 @@ app.get('/api/trending', async (req, res) => {
       topRatedTV,
       upcomingAnimeList
     ] = await Promise.all([
-      searchAniList('', 'ANIME', 1, 50),
-      getTrendingTMDB('movie', 'week'),
+      searchAniList('', 'ANIME', 1, 50, {}, isAdult),
+      getTrendingTMDB('movie', 'week'), // trending doesn't support include_adult natively easily without discover, so we filter it? Actually, TMDB trending doesn't include porn.
       getTrendingTMDB('tv', 'week'),
       searchIndexer(4, '', '').catch(() => []),
       getUpcomingMoviesTMDB(),
       getTopRatedTMDB('movie'),
       getTopRatedTMDB('tv'),
-      getUpcomingAnime()
+      getUpcomingAnime(isAdult)
     ]);
 
     // Build featured slideshow items

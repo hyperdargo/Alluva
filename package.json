@@ -1,6 +1,6 @@
 {
   "name": "stream-vault",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Stream Vault - Personal Media Hub with torrent search, metadata, and in-browser playback",
   "main": "server.js",
   "scripts": {

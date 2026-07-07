@@ -12,6 +12,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -30,7 +31,8 @@
           </svg>
         </button>
         <a href="#/home" class="logo" data-view="home">
-          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px; height:28px;">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="width:28px; height:28px;">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
           <span class="logo-text">Stream Vault</span>
@@ -43,10 +45,11 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text" class="search-input" id="searchInput" placeholder="Search movies, tv, anime..." autocomplete="off">
+          <input type="text" class="search-input" id="searchInput" placeholder="Search movies, tv, anime..."
+            autocomplete="off">
           <div class="search-suggestions" id="searchSuggestions"></div>
         </div>
-        
+
         <select class="indexer-select" id="indexerSelect" title="Select torrent indexers">
           <option value="all">All Indexers</option>
           <option value="1">1337x</option>
@@ -56,7 +59,7 @@
           <option value="11">YTS.gg (Movies)</option>
           <option value="12">EZTVx.to (TV Shows)</option>
         </select>
-        
+
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
           <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="5"></circle>
@@ -73,11 +76,13 @@
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
         </button>
-        
+
         <a href="#/settings" class="nav-item icon-btn" data-view="settings" title="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px; height:20px;">
             <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
           </svg>
         </a>
       </div>
@@ -116,12 +121,16 @@
             <!-- Populated dynamically by app.js -->
           </div>
 
-          <div class="extension-notice-banner" style="background: linear-gradient(135deg, rgba(230, 57, 70, 0.1) 0%, rgba(29, 53, 87, 0.2) 100%); border: 1px solid rgba(230, 57, 70, 0.2); border-radius: 12px; padding: 20px; margin: 24px 32px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div class="extension-notice-banner"
+            style="background: linear-gradient(135deg, rgba(230, 57, 70, 0.1) 0%, rgba(29, 53, 87, 0.2) 100%); border: 1px solid rgba(230, 57, 70, 0.2); border-radius: 12px; padding: 20px; margin: 24px 32px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
               <h3 style="margin: 0; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.4rem;">🎬</span> <span id="bannerTitle">For the Best Experience, Use VLC!</span>
+                <span style="font-size: 1.4rem;">🎬</span> <span id="bannerTitle">For the Best Experience, Use
+                  VLC!</span>
               </h3>
-              <select id="bannerLangSelect" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+              <select id="bannerLangSelect"
+                style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
                 <option value="en" style="color: #000;">🇬🇧 English</option>
                 <option value="np" style="color: #000;">🇳🇵 Nepali</option>
                 <option value="hi" style="color: #000;">🇮🇳 Hindi</option>
@@ -131,26 +140,34 @@
                 <option value="ru" style="color: #000;">🇷🇺 Russian</option>
               </select>
             </div>
-            
+
             <p id="bannerDesc1" style="margin: 0; color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">
-              Some videos may fail or stutter in the web browser. We highly recommend installing our extension to play videos directly in VLC Media Player (which plays everything flawlessly!).
+              Some videos may fail or stutter in the web browser. We highly recommend installing our extension to play
+              videos directly in VLC Media Player (which plays everything flawlessly!).
             </p>
-            
-            <div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border: 1px solid rgba(255,255,255,0.05);">
+
+            <div
+              style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border: 1px solid rgba(255,255,255,0.05);">
               <div style="color: #94a3b8; font-size: 0.9rem;">
                 <span id="bannerDesc2">Download the extension and follow the video guide here:</span><br>
-                <a href="https://filemanager.ankitgupta.com.np/files/Extention/" target="_blank" style="color: #60a5fa; text-decoration: none; font-weight: 500; font-size: 1rem; display: inline-block; margin-top: 6px; transition: color 0.2s;" onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='#60a5fa'">https://filemanager.ankitgupta.com.np/files/Extention/</a>
+                <a href="https://filemanager.ankitgupta.com.np/files/Extention/" target="_blank"
+                  style="color: #60a5fa; text-decoration: none; font-weight: 500; font-size: 1rem; display: inline-block; margin-top: 6px; transition: color 0.2s;"
+                  onmouseover="this.style.color='#93c5fd'"
+                  onmouseout="this.style.color='#60a5fa'">https://filemanager.ankitgupta.com.np/files/Extention/</a>
               </div>
-              <div style="background: rgba(255,255,255,0.08); padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; color: #fff; font-family: monospace; border: 1px solid rgba(255,255,255,0.1);">
-                ID: <span style="color: #4ade80;">demo</span> <span style="opacity:0.5; margin: 0 8px;">|</span> Pass: <span style="color: #4ade80;">demodemodemo</span>
+              <div
+                style="background: rgba(255,255,255,0.08); padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; color: #fff; font-family: monospace; border: 1px solid rgba(255,255,255,0.1);">
+                ID: <span style="color: #4ade80;">demo</span> <span style="opacity:0.5; margin: 0 8px;">|</span> Pass:
+                <span style="color: #4ade80;">demodemodemo</span>
               </div>
             </div>
-            
+
             <p id="bannerDesc3" style="margin: 0; color: #64748b; font-size: 0.85rem; font-style: italic;">
-              Note: Videos stream directly over the internet. They are not downloaded to your PC, so it may take a few seconds to buffer before playing.
+              Note: Videos stream directly over the internet. They are not downloaded to your PC, so it may take a few
+              seconds to buffer before playing.
             </p>
           </div>
-          
+
           <script>
             const translations = {
               en: {
@@ -196,7 +213,7 @@
                 desc3: "Примечание: видео транслируются напрямую через интернет. Они не скачиваются на ваш ПК, поэтому перед началом воспроизведения может потребоваться несколько секунд для буферизации."
               }
             };
-          
+
             document.getElementById('bannerLangSelect').addEventListener('change', (e) => {
               const lang = e.target.value;
               document.getElementById('bannerTitle').textContent = translations[lang].title;
@@ -291,6 +308,19 @@
           <div class="view-header">
             <h1 class="view-title">Anime</h1>
             <div class="view-filters">
+              <select class="filter-select" id="animeGenreFilter">
+                <option value="">All Genres</option>
+                <option value="Action">Action</option>
+                <option value="Adventure">Adventure</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Drama">Drama</option>
+                <option value="Fantasy">Fantasy</option>
+                <option value="Horror">Horror</option>
+                <option value="Romance">Romance</option>
+                <option value="Sci-Fi">Sci-Fi</option>
+                <option value="Slice of Life">Slice of Life</option>
+                <option value="Hentai" class="adult-genre" style="display:none;">Hentai</option>
+              </select>
               <select class="filter-select" id="animeSeasonFilter">
                 <option value="">All Seasons</option>
                 <option value="WINTER">Winter</option>
@@ -322,6 +352,7 @@
               </select>
               <select class="filter-select" id="movieGenreFilter">
                 <option value="">All Genres</option>
+                <option value="adult" class="adult-genre" style="display:none;">Adult (18+)</option>
               </select>
             </div>
           </div>
@@ -338,6 +369,7 @@
               </select>
               <select class="filter-select" id="tvGenreFilter">
                 <option value="">All Genres</option>
+                <option value="adult" class="adult-genre" style="display:none;">Adult (18+)</option>
               </select>
             </div>
           </div>
@@ -412,6 +444,16 @@
                   <option value="light">Light</option>
                 </select>
               </div>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Enable 18+ Content</span>
+                  <span class="setting-description">Show adult movies, TV shows, and anime</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="adultContentSetting">
+                  <span class="slider round"></span>
+                </label>
+              </div>
             </div>
 
             <div class="settings-section">
@@ -450,28 +492,33 @@
                   <span class="setting-label">VLC Path</span>
                   <span class="setting-description">Leave blank to use default location</span>
                 </div>
-                <input type="text" class="setting-input" id="vlcPathSetting" placeholder="C:\Program Files\VideoLAN\VLC\vlc.exe" style="width: 100%; max-width: 100%; margin-top: 4px;">
+                <input type="text" class="setting-input" id="vlcPathSetting"
+                  placeholder="C:\Program Files\VideoLAN\VLC\vlc.exe"
+                  style="width: 100%; max-width: 100%; margin-top: 4px;">
               </div>
               <div class="setting-item flex-column">
                 <div class="setting-info" style="margin-bottom: 8px;">
                   <span class="setting-label">VLC Arguments</span>
                   <span class="setting-description">Command line arguments to pass to VLC</span>
                 </div>
-                <input type="text" class="setting-input" id="vlcArgsSetting" placeholder="--network-caching=3000" style="width: 100%; max-width: 100%; margin-top: 4px;">
+                <input type="text" class="setting-input" id="vlcArgsSetting" placeholder="--network-caching=3000"
+                  style="width: 100%; max-width: 100%; margin-top: 4px;">
               </div>
               <div class="setting-item flex-column">
                 <div class="setting-info" style="margin-bottom: 8px;">
                   <span class="setting-label">MPV Path</span>
                   <span class="setting-description">Leave blank to launch 'mpv' from system PATH</span>
                 </div>
-                <input type="text" class="setting-input" id="mpvPathSetting" placeholder="C:\mpv\mpv.exe" style="width: 100%; max-width: 100%; margin-top: 4px;">
+                <input type="text" class="setting-input" id="mpvPathSetting" placeholder="C:\mpv\mpv.exe"
+                  style="width: 100%; max-width: 100%; margin-top: 4px;">
               </div>
               <div class="setting-item flex-column">
                 <div class="setting-info" style="margin-bottom: 8px;">
                   <span class="setting-label">MPV Arguments</span>
                   <span class="setting-description">Command line arguments to pass to MPV</span>
                 </div>
-                <input type="text" class="setting-input" id="mpvArgsSetting" placeholder="--cache=yes" style="width: 100%; max-width: 100%; margin-top: 4px;">
+                <input type="text" class="setting-input" id="mpvArgsSetting" placeholder="--cache=yes"
+                  style="width: 100%; max-width: 100%; margin-top: 4px;">
               </div>
             </div>
 
@@ -507,7 +554,7 @@
             <div class="settings-section">
               <h2 class="settings-title">About</h2>
               <div class="about-info">
-                <p>Stream Vault v1.0.0</p>
+                <p>Stream Vault v1.0.4</p>
                 <p>A self-hosted personal media hub inspired by Jellyfin</p>
                 <p>Built with Express.js, AniList, TMDB, and Torznab indexers</p>
               </div>
@@ -524,28 +571,27 @@
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
             </button>
+            <!-- Inline Player Container -->
+            <div class="inline-player-wrapper" id="playerModal" style="display: none;">
+              <div class="player-header">
+                <h3 class="player-title" id="playerTitle">Video Player</h3>
+                <button class="modal-close" id="playerClose" aria-label="Close player">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              <div class="player-container">
+                <video class="video-player" id="videoPlayer" playsinline crossorigin="anonymous">
+                  <!-- Subtitles will be injected here -->
+                </video>
+              </div>
+            </div>
+
             <div class="detail-content" id="detailContent"></div>
           </div>
         </section>
-
-        <!-- Player Modal -->
-        <div class="modal-overlay" id="playerModal" style="display: none;">
-          <div class="modal player-modal">
-            <div class="player-header">
-              <h3 class="player-title" id="playerTitle">Video Player</h3>
-              <button class="modal-close" id="playerClose" aria-label="Close player">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            <div class="player-container">
-              <video class="video-player" id="videoPlayer" controls playsinline></video>
-              <div class="player-actions" id="playerActions"></div>
-            </div>
-          </div>
-        </div>
 
         <!-- Add to Catalog Modal -->
         <div class="modal-overlay" id="catalogModal" style="display: none;">
@@ -602,11 +648,12 @@
       </div>
 
       <footer class="app-footer">
-        <p>&copy; copyright by DTEmpire (DargoTamber) | version 1.0.2</p>
+        <p>&copy; copyright by DTEmpire (DargoTamber) | version 1.0.4</p>
       </footer>
     </main>
   </div>
 
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <script src="app.js"></script>
 </body>
 
