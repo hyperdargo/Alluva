@@ -3252,7 +3252,7 @@ function filterAdult(items) {
 // ==========================================================================
 
 function embedSandbox() {
-  return state.preferences.enableAdBlock !== false ? 'sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation"' : '';
+  return state.preferences.enableAdBlock !== false ? 'sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"' : '';
 }
 
 function playStream(title, url, trackingInfo = {}) {
