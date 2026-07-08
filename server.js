@@ -7,6 +7,16 @@ const pathModule = require('path');
 const https = require('https');
 const http = require('http');
 const urlModule = require('url');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_streamvault_key_123!';
+const USERS_FILE = './users.json';
+
+// Initialize users.json if it doesn't exist
+if (!fs.existsSync(USERS_FILE)) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify([]));
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +29,65 @@ app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
+
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
+// Proxy for bypassing referer blocks on HLS streams
+app.use('/stream-proxy', createProxyMiddleware({
+  target: 'https://', // Placeholder, dynamic based on request
+  changeOrigin: true,
+  router: function(req) {
+    if (req.query.url) {
+      const u = new URL(req.query.url);
+      return u.origin;
+    }
+    return 'https://';
+  },
+  pathRewrite: function (path, req) {
+    if (req.query.url) {
+      const url = new URL(req.query.url);
+      return url.pathname + url.search;
+    }
+    return path;
+  },
+  onProxyReq(proxyReq, req) {
+    if (req.query.referer) {
+      proxyReq.setHeader('Referer', req.query.referer);
+    }
+    if (req.query.origin) {
+      proxyReq.setHeader('Origin', req.query.origin);
+    }
+  }
+}));
+
+// Include the new streaming routes
+const streamRouter = require('./routes/stream');
+app.use('/api/stream', streamRouter);
+
+
+function loadUsers() {
+  try {
+    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+  } catch (err) {
+    return [];
+  }
+}
+
+function saveUsers(users) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+}
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+}
 
 // Configuration
 const TORZNAB_API_KEY = process.env.TORZNAB_API_KEY || '4bf8dd57f1d043ae88fb5da57f789994';
@@ -1070,7 +1139,7 @@ async function getTMDBDetail(id, type) {
 
   try {
     const response = await fetch(
-      `https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=videos,credits,external_ids`
+      `https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=en-US&append_to_response=videos,credits,external_ids,recommendations`
     );
     return await response.json();
   } catch (error) {
@@ -1480,7 +1549,89 @@ app.delete('/api/torrserver/torrent/:hash', async (req, res) => {
   }
 });
 
-// ============= Catalog endpoints =============
+// ============= Auth Endpoints =============
+app.post('/api/auth/signup', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  
+  const users = loadUsers();
+  if (users.find(u => u.username === username)) return res.status(400).json({ error: 'Username taken' });
+  
+  const hashedPassword = bcrypt.hashSync(password, 8);
+  const newUser = { username, password: hashedPassword, catalog: [], continueWatching: [] };
+  users.push(newUser);
+  saveUsers(users);
+
+  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, user: { username } });
+});
+
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  const users = loadUsers();
+  const user = users.find(u => u.username === username);
+  if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+  const valid = bcrypt.compareSync(password, user.password);
+  if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
+
+  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' });
+  res.json({ token, user: { username } });
+});
+
+app.get('/api/auth/me', authenticateToken, (req, res) => {
+  res.json({ user: { username: req.user.username } });
+});
+
+// ============= User Data Endpoints =============
+app.get('/api/user/data', authenticateToken, (req, res) => {
+  const users = loadUsers();
+  const user = users.find(u => u.username === req.user.username);
+  if (!user) return res.sendStatus(404);
+  res.json({ catalog: user.catalog || [], continueWatching: user.continueWatching || [] });
+});
+app.get('/api/user/catalog', authenticateToken, (req, res) => {
+  const users = loadUsers();
+  const user = users.find(u => u.username === req.user.username);
+  if (!user) return res.sendStatus(404);
+  res.json(user.catalog || []);
+});
+
+app.post('/api/user/catalog', authenticateToken, (req, res) => {
+  const users = loadUsers();
+  const user = users.find(u => u.username === req.user.username);
+  if (!user) return res.sendStatus(404);
+  
+  if (!user.catalog) user.catalog = [];
+  const item = { ...req.body, id: Date.now(), addedAt: new Date().toISOString() };
+  user.catalog.push(item);
+  saveUsers(users);
+  res.json(item);
+});
+
+app.delete('/api/user/catalog/:id', authenticateToken, (req, res) => {
+  const users = loadUsers();
+  const user = users.find(u => u.username === req.user.username);
+  if (!user) return res.sendStatus(404);
+
+  if (user.catalog) {
+    user.catalog = user.catalog.filter(item => item.id !== parseInt(req.params.id));
+    saveUsers(users);
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/user/history', authenticateToken, (req, res) => {
+  const users = loadUsers();
+  const user = users.find(u => u.username === req.user.username);
+  if (!user) return res.sendStatus(404);
+
+  user.continueWatching = req.body.continueWatching || [];
+  saveUsers(users);
+  res.json({ ok: true });
+});
+
+// ============= Catalog endpoints (Legacy unauthenticated) =============
 const CATALOG_FILE = './catalog.json';
 
 function loadCatalog() {

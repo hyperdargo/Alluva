@@ -4,7 +4,7 @@
 <div align="center">
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.4-success.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-1.0.5-success.svg)](package.json)
 [![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)](#)
 
@@ -27,31 +27,31 @@
 
 ---
 
-## ✨ What's New in v1.0.4?
+## ✨ What's New in v1.0.5?
 
+v1.0.5 is a milestone release that brings together the best of everything we've built since v1.0.0 — from Prowlarr integration and direct scrapers all the way to a polished, production-ready user experience. Here's what makes it different:
+
+### 🔄 Smarter Streaming
+
+- **Dual Streaming Engine**: Torrent streaming is now the secondary option. Direct Play is the new default — faster loads, fewer dependencies, and instant playback. Torrent streams remain available as a fallback for content not available via direct servers.
+- **Direct Download in Torrent Streams**: Every torrent result now includes a direct download button, making it easy to save media locally while streaming.
 - **Infinite Scrolling**: Replaced the static "Load More" buttons with a seamless infinite scroll mechanism across the Anime, Movies, and TV Shows grids, dynamically fetching the next page as you browse.
-- **Optimized Dashboard Performance**: Capped the featured lists (Trending, Top Rated, Upcoming) on the Home view to 16 items each, significantly improving initial load times and overall UI responsiveness.
+- **Continue Watching Auto-Play**: Resume from where you left off — saves playback position and auto-restores it on return.
+
+### 🎨 Redesigned UI
+
+- **Login Page**: Added a dedicated authentication page with session management for a more secure, personalized experience.
+- **Responsive Redesign**: Fully adaptive layout across desktop, tablet, and mobile devices with a redesigned navigation sidebar, improved detail views, and better touch support.
+- **Seasons & Series Browser**: TV shows now display all other seasons below the info card as poster cards. Anime shows related anime (sequels/prequels). Movies show collection parts — no more digging to find the next episode or related title.
+- **Detail View Overhaul**: Redesigned theater layout with a 3-column grid, episode grids with watched-dot progress indicators, and embedded recommendations sidebar.
+- **Recommendations Sidebar**: Shows genre-matched recommendations for every title, with a poster-card layout for easy browsing.
+
+### 🔒 Safety & Performance
+
 - **18+ Content Safe Search**: Added a global setting to enable/disable 18+ content across TMDB and AniList searches, defaulting to Safe Search (Off).
 - **Hentai Genre Filter**: Introduced a hidden Hentai genre filter in the Anime view that dynamically appears only when 18+ content is enabled.
+- **Optimized Dashboard Performance**: Capped the featured lists (Trending, Top Rated, Upcoming) on the Home view to 16 items each, significantly improving initial load times and overall UI responsiveness.
 - **Robust API Error Handling**: Fixed a critical bug in the search backend where missing TMDB results or missing AniList image/title data would crash the application or UI.
-
----
-
-## ✨ What's New in v1.0.3?
-
-- **Direct Scrapers Priority**: Refined the search engine to prioritize lightning-fast direct scrapers (The Pirate Bay, Nyaa, YTS, EZTV) by default, completely decoupling search performance from slow or failing indexers.
-- **Strict Scraper Timeouts**: Introduced a hard 5-second maximum timeout on the Server-Sent Events (SSE) stream, ensuring the search UI never hangs indefinitely due to blocked indexers (like FlareSolverr timeouts).
-- **VLC Extension Fix**: Completely removed the legacy hardcoded relay endpoint from the browser extension, allowing direct playback of native TorrServer HTTPS streams in VLC without input errors.
-- **Improved Extension Guide UI**: Overhauled the homepage informational banner to be a sleek, dismissible styled card with beautiful typography.
-- **Multilingual Support**: Added a built-in translation dropdown to the homepage banner, supporting English, Nepali, Hindi, Italian, Japanese, Chinese, and Russian.
-
----
-
-## ✨ What's New in v1.0.2?
-
-- **Prowlarr Integration (Major Update)**: The entire scraping backend has been overhauled to sync natively with your Prowlarr instance. This completely eliminates Cloudflare `Turnstile` timeouts (which blocked 1337x, EZTV, and Ext.to on older FlareSolverr setups) by offloading the proxy/captcha handling directly to Prowlarr!
-- **HDHub4u Direct Links**: Added a powerful new "Direct Download" button for movies that intelligently routes you straight to `new2.hdhub4u.c` to grab DDLs safely without brittle scrapers.
-- **YTS Direct Engine**: Retained a custom fallback scraper specifically for `yts.gg` to ensure lightning-fast YTS queries outside of Prowlarr!
 
 ---
 
@@ -293,7 +293,7 @@ If you find Stream Vault helpful, please:
 
 ### Made with ❤️ for the Media Streaming Community
 
-**© copyright by DTEmpire (DargoTamber) | version 1.0.4**
+**© copyright by DTEmpire (DargoTamber) | version 1.0.5**
 
 ```text
 █████████████████████████████████████████████

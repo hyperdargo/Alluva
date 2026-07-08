@@ -1,0 +1,244 @@
+/* AniWave Overrides */
+:root {
+  --aw-bg-body: #08080f;
+  --aw-bg-panel: #0c0c1a;
+  --aw-bg-panel-hover: #141428;
+  --aw-text-primary: #f2f2f2;
+  --aw-text-secondary: #9494b8;
+  --aw-primary: #3b82f6;
+  --aw-primary-hover: #60a5fa;
+  --aw-sub: #00b8ff;
+  --aw-dub: #ffc107;
+  --aw-border: #1a1a2e;
+}
+
+body.header-nofixed {
+  background-color: var(--aw-bg-body);
+  color: var(--aw-text-primary);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Header */
+#topNav {
+  background: rgba(8, 8, 15, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
+
+#topNav .wrapper {
+  height: 56px;
+}
+
+#topNav a {
+  transition: color 0.2s ease;
+  font-size: 14px !important;
+}
+
+#topNav a:hover {
+  color: var(--aw-primary) !important;
+}
+
+#searchInput {
+  background: rgba(255,255,255,0.06) !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  color: var(--aw-text-primary) !important;
+  height: 34px !important;
+  font-size: 13px !important;
+}
+
+#searchInput:focus {
+  border-color: var(--aw-primary) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+/* Watch Layout */
+.layout-page-watchtv {
+  margin-top: 20px;
+}
+
+.watch-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.aside-wrapper {
+  display: flex;
+  gap: 20px;
+}
+
+aside.main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Player */
+#w-player {
+  background-color: var(--aw-bg-panel);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  margin-bottom: 20px;
+}
+
+#player-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  background-color: #000;
+}
+
+#controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background-color: var(--aw-bg-panel);
+  border-top: 1px solid var(--aw-border);
+}
+
+.ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--aw-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.ctrl:hover {
+  color: var(--aw-text-primary);
+}
+
+.ctrl.active {
+  color: var(--aw-primary);
+}
+
+/* Servers */
+#w-servers {
+  background-color: var(--aw-bg-panel);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.servers .type {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.servers .type label {
+  width: 100px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.servers .type[data-type="sub"] label {
+  color: var(--aw-sub);
+}
+
+.servers .type[data-type="dub"] label {
+  color: var(--aw-dub);
+}
+
+.servers .type ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1;
+}
+
+.servers .type li {
+  background-color: rgba(255,255,255,0.05);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.servers .type li:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.servers .type li.active {
+  background-color: var(--aw-primary);
+  color: #fff;
+}
+
+/* Episodes */
+#w-episodes {
+  background-color: var(--aw-bg-panel);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.episodes-head {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--aw-border);
+  padding-bottom: 15px;
+}
+
+.ep-range {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ep-range li a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255,255,255,0.05);
+  color: var(--aw-text-primary);
+  text-decoration: none;
+  border-radius: 4px;
+  height: 36px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.ep-range li a:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.ep-range li a.active {
+  background-color: var(--aw-primary);
+  color: #fff;
+}
+
+/* Torrent Specific UI within servers */
+.torrent-search-btn {
+  background-color: var(--aw-primary);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.torrent-search-btn:hover {
+  background-color: var(--aw-primary-hover);
+}
