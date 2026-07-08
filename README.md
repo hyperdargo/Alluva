@@ -294,7 +294,7 @@ If you find Stream Vault helpful, please:
 
 ### Made with ❤️ for the Media Streaming Community
 
-**© copyright by DTEmpire (DargoTamber) | version 1.0.5**
+**© copyright by DTEmpire (DargoTamber) | version 1.0.5 (latest)**
 
 ```text
 █████████████████████████████████████████████
