@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  stream-vault:
+    build: .
+    container_name: stream-vault
+    ports:
+      - "3000:3000"
+    env_file: .env
+    restart: unless-stopped

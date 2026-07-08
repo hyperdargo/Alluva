@@ -2234,8 +2234,4 @@ app.listen(PORT, () => {
   if (!TMDB_API_KEY || TMDB_API_KEY === 'your_tmdb_key_here') {
     console.log('⚠️  TMDB_API_KEY not configured - movie/TV search will be limited');
   }
-  console.log('✅ 1337x support enabled');
-  console.log('✅ Ext.to support enabled');
-  console.log('✅ YTS.gg support enabled');
-  console.log('✅ EZTVx.to support enabled');
 });
