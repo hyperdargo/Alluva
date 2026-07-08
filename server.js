@@ -934,6 +934,7 @@ async function getAnimeDetail(id) {
     query ($id: Int) {
       Media(id: $id, type: ANIME) {
         id
+        idMal
         title { romaji english native }
         coverImage { large medium }
         bannerImage
@@ -950,6 +951,7 @@ async function getAnimeDetail(id) {
         nextAiringEpisode { airingAt timeUntilAiring episode }
         studios { nodes { name } }
         trailer { id site thumbnail }
+        externalLinks { id site url }
         relations { edges { node { id title { romaji } coverImage { large } type } relationType } }
         recommendations { nodes { mediaRecommendation { id title { romaji } coverImage { large } } rating } }
       }
@@ -963,7 +965,15 @@ async function getAnimeDetail(id) {
       body: JSON.stringify({ query: graphqlQuery, variables: { id } })
     });
     const data = await response.json();
-    return data.data?.Media;
+    const media = data.data?.Media;
+    if (media) {
+      const tmdbLink = media.externalLinks?.find(l => l.site === 'TMDB' || l.site === 'The Movie Database');
+      if (tmdbLink) {
+        const parts = tmdbLink.url.replace(/\/$/, '').split('/');
+        media.tmdbId = parseInt(parts[parts.length - 1]);
+      }
+    }
+    return media;
   } catch (error) {
     console.error('AniList detail error:', error.message);
     return null;
@@ -1497,6 +1507,72 @@ app.get('/api/media/tv/:id/season/:seasonNum', async (req, res) => {
     console.error('TMDB season error:', error.message);
     res.status(500).json({ error: 'Failed to fetch season details' });
   }
+});
+
+// ============= Flat episode names (TMDB primary, MAL/Jikan fallback) =============
+app.get('/api/episodes/flat', async (req, res) => {
+  const tmdbId = parseInt(req.query.tmdbId);
+  const malId = parseInt(req.query.malId);
+
+  // Try TMDB first
+  if (tmdbId) {
+    try {
+      const detailRes = await fetch(
+        `https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=en-US`
+      );
+      const detail = await detailRes.json();
+      if (detail.seasons) {
+        const seasonNumbers = detail.seasons
+          .filter(s => s.season_number > 0 && s.episode_count > 0)
+          .sort((a, b) => a.season_number - b.season_number)
+          .map(s => s.season_number);
+
+        const flatEpisodes = [];
+        let flatNum = 1;
+
+        for (const seasonNum of seasonNumbers) {
+          const epRes = await fetch(
+            `https://api.themoviedb.org/3/tv/${tmdbId}/season/${seasonNum}?api_key=${TMDB_API_KEY}&language=en-US`
+          );
+          const seasonData = await epRes.json();
+          if (seasonData.episodes) {
+            for (const ep of seasonData.episodes) {
+              flatEpisodes.push({
+                episode_number: flatNum,
+                name: ep.name || `Episode ${ep.episode_number}`
+              });
+              flatNum++;
+            }
+          }
+        }
+
+        if (flatEpisodes.length > 0) {
+          return res.json({ episodes: flatEpisodes, source: 'tmdb' });
+        }
+      }
+    } catch (e) {
+      console.error('TMDB flat episodes error:', e.message);
+    }
+  }
+
+  // Fallback to MAL/Jikan
+  if (malId) {
+    try {
+      const epRes = await fetch(`https://api.jikan.moe/v4/anime/${malId}/episodes`);
+      const epData = await epRes.json();
+      if (epData.data && epData.data.length > 0) {
+        const flatEpisodes = epData.data.map((ep, i) => ({
+          episode_number: i + 1,
+          name: ep.title || `Episode ${ep.mal_id}`
+        }));
+        return res.json({ episodes: flatEpisodes, source: 'mal' });
+      }
+    } catch (e) {
+      console.error('Jikan episodes error:', e.message);
+    }
+  }
+
+  res.json({ episodes: [] });
 });
 
 // ============= TorrServer integration proxy endpoints =============
