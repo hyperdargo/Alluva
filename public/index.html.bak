@@ -4,11 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#1e1b4b">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Stream Vault">
-
+  <meta name="theme-color" content="#1a1a2e">
   <meta name="description" content="Stream Vault - Your personal media hub for anime, movies, and TV shows">
   <title>Stream Vault</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,59 +13,80 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-  <link rel="stylesheet" href="style.css?v=14">
-  <link rel="stylesheet" href="theme.css?v=2">
+  <link rel="stylesheet" href="style.css?v=13">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
-  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 
 <body>
-  <div id="splashScreen" style="position:fixed;inset:0;z-index:99999;background:#08080f;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s;font-family:'Inter',system-ui,sans-serif;">
-    <img src="/icons/android-chrome-192x192.png" alt="Stream Vault" width="80" height="80" style="margin-bottom:24px;border-radius:16px;">
-    <h1 style="margin:0;font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.3px;">Stream Vault</h1>
-    <p style="margin:8px 0 0;font-size:13px;color:#64748b;">Loading your media hub...</p>
-    <div style="margin-top:32px;width:32px;height:32px;border:3px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-  </div>
   <div id="app">
-    <!-- AniWave Styled Header -->
-    <header id="topNav">
-      <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 0 15px;">
-          <div class="wrapper" style="display: flex; align-items: center; justify-content: space-between; height: 70px;">
-              <div class="start" style="display: flex; align-items: center; gap: 20px;">
-                  <button class="hamburger-btn" id="hamburgerBtn" style="background: none; border: none; color: #fff; cursor: pointer;">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px;"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                  </button>
-                  <a href="#/home" class="logo" data-view="home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff;">
-                      <img src="favicon.svg" alt="Logo" style="height: 32px; width: 32px;">
-                      <span style="font-weight: 700; font-size: 1.25rem;">StreamVault</span>
-                  </a>
-                  
-                  <div id="menu" style="display: flex; gap: 20px; align-items: center; margin-left: 20px;">
-                      <a href="#/home" data-view="home" style="color: #fff; text-decoration: none; font-weight: 500;">Home</a>
-                      <a href="#/movies" data-view="movies" style="color: #cbd5e1; text-decoration: none; font-weight: 500;">Movies</a>
-                      <a href="#/tv" data-view="tv" style="color: #cbd5e1; text-decoration: none; font-weight: 500;">TV Shows</a>
-                      <a href="#/anime" data-view="anime" style="color: #cbd5e1; text-decoration: none; font-weight: 500;">Anime</a>
-                  </div>
-              </div>
+    <!-- Sleek Top Navigation -->
+    <header class="top-nav" id="topNav">
+      <div class="nav-left">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <a href="#/home" class="logo" data-view="home">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="width:28px; height:28px;">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <span class="logo-text">Stream Vault</span>
+        </a>
+      </div>
 
-              <div class="end" style="display: flex; align-items: center; gap: 20px;">
-                  <div class="search-container" style="position: relative; display: flex; align-items: center; background: rgba(255,255,255,0.1); border-radius: 4px; padding: 4px 10px;">
-                      <input type="text" class="search-input" id="searchInput" placeholder="Search anime, movies..." autocomplete="off" style="background: transparent; border: none; color: #fff; outline: none; padding: 6px; width: 200px;">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px; color: #94a3b8;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                      <div class="search-suggestions" id="searchSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: #1a1a2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; display: none; z-index: 100;"></div>
-                  </div>
-                  
-                  <a href="#/catalog" data-view="catalog" class="nav-item" style="color: #fff; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 6px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                    My List
-                  </a>
+      <div class="nav-right" style="display: flex; gap: 15px; align-items: center;">
+        <a href="#/catalog" class="nav-item" data-view="catalog" style="text-decoration: none; font-weight: 500; font-size: 15px; color: var(--color-text-primary); transition: color 0.2s;">My List</a>
+        <div class="search-container">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="search-input" id="searchInput" placeholder="Search movies, tv, anime..."
+            autocomplete="off">
+          <div class="search-suggestions" id="searchSuggestions"></div>
+        </div>
 
-                  <button id="authBtn" style="background: #3b82f6; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 500; cursor: pointer; font-size: 13px;">Sign In</button>
-              </div>
-          </div>
+        <select class="indexer-select" id="indexerSelect" title="Select torrent indexers">
+          <option value="all">All Indexers</option>
+          <option value="1">1337x</option>
+          <option value="2">The Pirate Bay</option>
+          <option value="4">Nyaa.si (Anime)</option>
+          <option value="10">Ext.to (Movies/TV)</option>
+          <option value="11">YTS.gg (Movies)</option>
+          <option value="12">EZTVx.to (TV Shows)</option>
+        </select>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+
+        <button id="authBtn" class="nav-item icon-btn" style="padding: 0 12px; border-radius: 20px; font-weight: 600; font-size: 14px; width: auto;" title="Sign In">Sign In</button>
+        <a href="#/settings" class="nav-item icon-btn" data-view="settings" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px; height:20px;">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
+          </svg>
+        </a>
       </div>
     </header>
 
@@ -91,15 +108,6 @@
         <a href="#/movies" class="drawer-link" data-view="movies">Movies</a>
         <a href="#/tv" class="drawer-link" data-view="tv">TV Shows</a>
         <a href="#/catalog" class="drawer-link" data-view="catalog">My List</a>
-        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0;">
-        <div style="padding: 8px 16px;">
-          <label style="font-size: 12px; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Torrent Indexer</label>
-          <select class="drawer-indexer-select" id="drawerIndexerSelect" style="width:100%; background:rgba(255,255,255,0.06); color:#fff; border:1px solid rgba(255,255,255,0.1); padding:8px; border-radius:4px; font-size:13px;">
-            <option value="all">All Indexers</option>
-          </select>
-        </div>
-        <a href="#/settings" class="drawer-link" data-view="settings">⚙ Settings</a>
-        <a href="javascript:void(0)" class="drawer-link" id="drawerAuthBtn" style="color: #3b82f6;">Sign In</a>
       </nav>
     </aside>
 
@@ -116,26 +124,38 @@
           </div>
 
           <div class="extension-notice-banner"
-            style="background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.15); border-radius: 12px; padding: 20px; margin: 24px 32px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.4rem;">🎬</span>
-              <h3 style="margin: 0; color: #fff; font-size: 1.15rem;">For the Best Experience, Use VLC!</h3>
+            style="background: linear-gradient(135deg, rgba(230, 57, 70, 0.1) 0%, rgba(29, 53, 87, 0.2) 100%); border: 1px solid rgba(230, 57, 70, 0.2); border-radius: 12px; padding: 20px; margin: 24px 32px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <h3 style="margin: 0; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.4rem;">🎬</span> <span id="bannerTitle">For the Best Experience, Use
+                  VLC!</span>
+              </h3>
+              <select id="bannerLangSelect"
+                style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
+                <option value="en" style="color: #000;">🇬🇧 English</option>
+                <option value="np" style="color: #000;">🇳🇵 Nepali</option>
+                <option value="hi" style="color: #000;">🇮🇳 Hindi</option>
+                <option value="it" style="color: #000;">🇮🇹 Italian</option>
+                <option value="ja" style="color: #000;">🇯🇵 Japanese</option>
+                <option value="zh" style="color: #000;">🇨🇳 Chinese</option>
+                <option value="ru" style="color: #000;">🇷🇺 Russian</option>
+              </select>
             </div>
 
-            <p style="margin: 0; color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">
+            <p id="bannerDesc1" style="margin: 0; color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">
               Some videos may fail or stutter in the web browser. We highly recommend installing our extension to play
               videos directly in VLC Media Player (which plays everything flawlessly!).
             </p>
 
             <div
               style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border: 1px solid rgba(255,255,255,0.05);">
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <span style="color:#94a3b8;font-size:0.9rem;">Download the extension and follow the video guide here:</span>
+              <div style="color: #94a3b8; font-size: 0.9rem;">
+                <span id="bannerDesc2">Download the extension and follow the video guide here:</span><br>
                 <a href="https://filemanager.ankitgupta.com.np/files/Extention/" target="_blank"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;text-decoration:none;font-weight:600;font-size:0.9rem;padding:10px 20px;border-radius:8px;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                  Click Here
-                </a>
+                  style="color: #60a5fa; text-decoration: none; font-weight: 500; font-size: 1rem; display: inline-block; margin-top: 6px; transition: color 0.2s;"
+                  onmouseover="this.style.color='#93c5fd'"
+                  onmouseout="this.style.color='#60a5fa'">https://filemanager.ankitgupta.com.np/files/Extention/</a>
               </div>
               <div
                 style="background: rgba(255,255,255,0.08); padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; color: #fff; font-family: monospace; border: 1px solid rgba(255,255,255,0.1);">
@@ -144,11 +164,66 @@
               </div>
             </div>
 
-            <p style="margin: 0; color: #64748b; font-size: 0.85rem; font-style: italic;">
+            <p id="bannerDesc3" style="margin: 0; color: #64748b; font-size: 0.85rem; font-style: italic;">
               Note: Videos stream directly over the internet. They are not downloaded to your PC, so it may take a few
               seconds to buffer before playing.
             </p>
           </div>
+
+          <script>
+            const translations = {
+              en: {
+                title: "For the Best Experience, Use VLC!",
+                desc1: "Some videos may fail or stutter in the web browser. We highly recommend installing our extension to play videos directly in VLC Media Player (which plays everything flawlessly!).",
+                desc2: "Download the extension and follow the video guide here:",
+                desc3: "Note: Videos stream directly over the internet. They are not downloaded to your PC, so it may take a few seconds to buffer before playing."
+              },
+              np: {
+                title: "उत्कृष्ट अनुभवको लागि, VLC प्रयोग गर्नुहोस्!",
+                desc1: "केही भिडियोहरू वेब ब्राउजरमा चल्न नसक्ने वा अड्किने हुन सक्छन्। हामी तपाइँलाई VLC मिडिया प्लेयरमा सिधै भिडियोहरू प्ले गर्न हाम्रो एक्सटेन्सन स्थापना गर्न सिफारिस गर्छौं (जसले सबै कुरा सहज रूपमा प्ले गर्छ!)।",
+                desc2: "एक्सटेन्सन डाउनलोड गर्नुहोस् र यहाँ भिडियो गाइड पछ्याउनुहोस्:",
+                desc3: "नोट: भिडियोहरू सिधै इन्टरनेटमा स्ट्रिम हुन्छन्। तिनीहरू तपाईंको पीसीमा डाउनलोड हुँदैनन्, त्यसैले प्ले गर्नु अघि बफर हुन केही सेकेन्ड लाग्न सक्छ।"
+              },
+              hi: {
+                title: "बेहतरीन अनुभव के लिए, VLC का उपयोग करें!",
+                desc1: "कुछ वीडियो वेब ब्राउज़र में चलने में विफल हो सकते हैं। हम अनुशंसा करते हैं कि आप वीडियो को सीधे VLC मीडिया प्लेयर में चलाने के लिए हमारा एक्सटेंशन इंस्टॉल करें (जो सब कुछ चलाता है!)।",
+                desc2: "एक्सटेंशन डाउनलोड करें और यहाँ वीडियो गाइड का पालन करें:",
+                desc3: "नोट: वीडियो सीधे इंटरनेट पर स्ट्रीम होते हैं। वे आपके पीसी में डाउनलोड नहीं होते हैं, इसलिए चलने से पहले बफर होने में कुछ सेकंड लग सकते हैं।"
+              },
+              it: {
+                title: "Per la migliore esperienza, usa VLC!",
+                desc1: "Alcuni video potrebbero bloccarsi nel browser. Consigliamo di installare la nostra estensione per riprodurre i video direttamente su VLC Media Player (che legge tutto senza problemi!).",
+                desc2: "Scarica l'estensione e segui la video guida qui:",
+                desc3: "Nota: i video vengono trasmessi direttamente via internet. Non vengono scaricati sul PC, quindi potrebbe volerci qualche secondo di caricamento prima dell'inizio."
+              },
+              ja: {
+                title: "最高のエクスペリエンスを得るには、VLCを使用してください！",
+                desc1: "Webブラウザでは一部のビデオが再生できなかったり、途切れたりする場合があります。すべてのビデオをスムーズに再生できるVLCメディアプレーヤーで直接再生するために、拡張機能をインストールすることを強くお勧めします。",
+                desc2: "拡張機能をダウンロードし、こちらのビデオガイドに従ってください:",
+                desc3: "注：ビデオはインターネット経由で直接ストリーミングされます。PCにはダウンロードされないため、再生が始まるまでに数秒のバッファリングが必要になる場合があります。"
+              },
+              zh: {
+                title: "为了获得最佳体验，请使用VLC！",
+                desc1: "有些视频可能无法在网络浏览器中正常播放。我们强烈建议安装我们的扩展程序，直接在VLC媒体播放器（可完美播放所有内容！）中播放视频。",
+                desc2: "在此处下载扩展程序并按照视频指南操作：",
+                desc3: "注：视频是直接通过互联网传输的。它们不会下载到您的电脑上，因此在播放前可能需要几秒钟的缓冲时间。"
+              },
+              ru: {
+                title: "Для лучшего качества используйте VLC!",
+                desc1: "Некоторые видео могут не воспроизводиться в браузере. Мы настоятельно рекомендуем установить наше расширение для просмотра видео напрямую через VLC Media Player (который воспроизводит всё без проблем!).",
+                desc2: "Скачайте расширение и следуйте видеоинструкции здесь:",
+                desc3: "Примечание: видео транслируются напрямую через интернет. Они не скачиваются на ваш ПК, поэтому перед началом воспроизведения может потребоваться несколько секунд для буферизации."
+              }
+            };
+
+            document.getElementById('bannerLangSelect').addEventListener('change', (e) => {
+              const lang = e.target.value;
+              document.getElementById('bannerTitle').textContent = translations[lang].title;
+              document.getElementById('bannerDesc1').textContent = translations[lang].desc1;
+              document.getElementById('bannerDesc2').textContent = translations[lang].desc2;
+              document.getElementById('bannerDesc3').textContent = translations[lang].desc3;
+            });
+          </script>
 
           <!-- Continue Watching -->
           <section class="content-section" id="continueWatchingSection" style="display: none;">
@@ -368,25 +443,16 @@
             <div class="settings-section">
               <h2 class="settings-title">Appearance</h2>
               <div class="setting-item">
-                  <div class="setting-info">
-                    <span class="setting-label">Theme</span>
-                    <span class="setting-description">Dark theme only</span>
-                  </div>
-                  <select class="setting-select" id="themeSetting" style="display:none;">
-                    <option value="dark" selected>Dark</option>
-                  </select>
-                  <span style="color:#64748b;font-size:13px;">🌙 Dark</span>
+                <div class="setting-info">
+                  <span class="setting-label">Theme</span>
+                  <span class="setting-description">Choose your preferred color scheme</span>
                 </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <span class="setting-label">Accent Color</span>
-                    <span class="setting-description">Choose accent color for buttons and highlights</span>
-                  </div>
-                  <select class="setting-select" id="accentSetting">
-                    <option value="blue">Blue</option>
-                    <option value="purple">Purple</option>
-                  </select>
-                </div>
+                <select class="setting-select" id="themeSetting">
+                  <option value="system">System</option>
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                </select>
+              </div>
               <div class="setting-item">
                 <div class="setting-info">
                   <span class="setting-label">Enable 18+ Content</span>
@@ -394,16 +460,6 @@
                 </div>
                 <label class="switch">
                   <input type="checkbox" id="adultContentSetting">
-                  <span class="slider round"></span>
-                </label>
-              </div>
-              <div class="setting-item">
-                <div class="setting-info">
-                  <span class="setting-label">Built-in Ad Block</span>
-                  <span class="setting-description">Block popup ads from Direct Play embed servers</span>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" id="adBlockSetting">
                   <span class="slider round"></span>
                 </label>
               </div>
@@ -507,7 +563,7 @@
             <div class="settings-section">
               <h2 class="settings-title">About</h2>
               <div class="about-info">
-                <p>Stream Vault v1.0.5</p>
+                <p>Stream Vault v1.0.4</p>
                 <p>A self-hosted personal media hub inspired by Jellyfin</p>
                 <p>Built with Express.js, AniList, TMDB, and Torznab indexers</p>
               </div>
@@ -628,15 +684,13 @@
       </div>
 
       <footer class="app-footer">
-        <p>&copy; copyright by DTEmpire (DargoTamber) | version 1.0.5</p>
+        <p>&copy; copyright by DTEmpire (DargoTamber) | version 1.0.4</p>
       </footer>
     </main>
   </div>
 
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-  <script src="https://content.jwplatform.com/libraries/KB5zFt7A.js"></script>
-  <script src="app.js?v=27"></script>
-  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
+  <script src="app.js?v=17"></script>
 </body>
 
 </html>

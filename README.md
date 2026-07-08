@@ -52,6 +52,7 @@ v1.0.5 is a milestone release that brings together the best of everything we've 
 - **Hentai Genre Filter**: Introduced a hidden Hentai genre filter in the Anime view that dynamically appears only when 18+ content is enabled.
 - **Optimized Dashboard Performance**: Capped the featured lists (Trending, Top Rated, Upcoming) on the Home view to 16 items each, significantly improving initial load times and overall UI responsiveness.
 - **Robust API Error Handling**: Fixed a critical bug in the search backend where missing TMDB results or missing AniList image/title data would crash the application or UI.
+- **Built-in Ad Block**: Added a global setting that blocks popup ads from Direct Play embed servers using the iframe `sandbox` attribute — no extension needed.
 
 ---
 
