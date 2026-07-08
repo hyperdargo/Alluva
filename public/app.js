@@ -30,7 +30,6 @@ const state = {
     player: 'torrserver',
     autoplay: false,
     enableAdultContent: false,
-    enableAdBlock: true,
     selectedIndexers: [2, 4, 5, 11],
     vlcPath: '', // Custom VLC path
     vlcArgs: '', // Custom VLC arguments
@@ -1624,16 +1623,6 @@ function loadSettingsView() {
     };
   }
 
-  const adBlockSetting = document.getElementById('adBlockSetting');
-  if (adBlockSetting) {
-    adBlockSetting.checked = state.preferences.enableAdBlock !== false;
-    adBlockSetting.onchange = (e) => {
-      state.preferences.enableAdBlock = e.target.checked;
-      savePreferences();
-      showToast(e.target.checked ? 'Ad blocking enabled' : 'Ad blocking disabled', 'success');
-    };
-  }
-
   // VLC Settings
   const vlcPathSetting = document.getElementById('vlcPathSetting');
   if (vlcPathSetting) {
@@ -2095,7 +2084,7 @@ async function launchDirectPlayer(server, type, seasonNum = 1, epNum = 1) {
   }
   
   if (container) {
-    container.innerHTML = `<iframe src="${url}" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen ${embedSandbox()}></iframe>`;
+    container.innerHTML = `<iframe src="${url}" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen></iframe>`;
   } else {
     const title = type === 'movie' 
       ? (details.title || details.original_title || details.title?.english || details.title?.romaji)
@@ -2128,7 +2117,7 @@ async function loadAnimeEmbed(serverId, container, details, type, seasonNum, epN
         const data = await res.json();
         
         if (data.url && container) {
-            container.innerHTML = `<iframe src="${data.url}" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen ${embedSandbox()}></iframe>`;
+            container.innerHTML = `<iframe src="${data.url}" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen></iframe>`;
             
             const title = details.title?.english || details.title?.romaji || details.name;
             updateContinueWatching(1, 100, {
@@ -3251,10 +3240,6 @@ function filterAdult(items) {
 // UTILITY FUNCTIONS
 // ==========================================================================
 
-function embedSandbox() {
-  return state.preferences.enableAdBlock !== false ? 'sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"' : '';
-}
-
 function playStream(title, url, trackingInfo = {}) {
   const container = document.getElementById('theaterPlayerContainer');
   if (container) {
@@ -3266,7 +3251,7 @@ function playStream(title, url, trackingInfo = {}) {
     const isEmbed = /embed|vidsrc|multiembed|vidlink|smashy|moviesapi|autoembed/i.test(url) && !/\.(mp4|webm|m3u8|mkv|avi)(\?|$)/i.test(url);
     
     if (isEmbed) {
-      container.innerHTML = `<iframe src="${url}" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen ${embedSandbox()}></iframe>`;
+      container.innerHTML = `<iframe src="${url}" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen></iframe>`;
       return;
     }
     
