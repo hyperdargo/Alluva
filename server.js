@@ -30,35 +30,36 @@ app.use((req, res, next) => {
   next();
 });
 
-const { createProxyMiddleware } = require('http-proxy-middleware');
-
-// Proxy for bypassing referer blocks on HLS streams
-app.use('/stream-proxy', createProxyMiddleware({
-  target: 'https://', // Placeholder, dynamic based on request
-  changeOrigin: true,
-  router: function(req) {
-    if (req.query.url) {
-      const u = new URL(req.query.url);
-      return u.origin;
+// Proxy for bypassing referer blocks on HLS streams (dynamic import for ESM compat)
+async function setupProxy() {
+  const { createProxyMiddleware } = await import('http-proxy-middleware');
+  app.use('/stream-proxy', createProxyMiddleware({
+    target: 'https://',
+    changeOrigin: true,
+    router: function(req) {
+      if (req.query.url) {
+        const u = new URL(req.query.url);
+        return u.origin;
+      }
+      return 'https://';
+    },
+    pathRewrite: function (path, req) {
+      if (req.query.url) {
+        const url = new URL(req.query.url);
+        return url.pathname + url.search;
+      }
+      return path;
+    },
+    onProxyReq(proxyReq, req) {
+      if (req.query.referer) {
+        proxyReq.setHeader('Referer', req.query.referer);
+      }
+      if (req.query.origin) {
+        proxyReq.setHeader('Origin', req.query.origin);
+      }
     }
-    return 'https://';
-  },
-  pathRewrite: function (path, req) {
-    if (req.query.url) {
-      const url = new URL(req.query.url);
-      return url.pathname + url.search;
-    }
-    return path;
-  },
-  onProxyReq(proxyReq, req) {
-    if (req.query.referer) {
-      proxyReq.setHeader('Referer', req.query.referer);
-    }
-    if (req.query.origin) {
-      proxyReq.setHeader('Origin', req.query.origin);
-    }
-  }
-}));
+  }));
+}
 
 // Include the new streaming routes
 const streamRouter = require('./routes/stream');
@@ -2227,11 +2228,14 @@ app.get('/api/webtorrent/stream', async (req, res) => {
 });
 
 // ============= Start server =============
-app.listen(PORT, () => {
-  console.log(`🚀 Stream Vault running at http://127.0.0.1:${PORT}`);
-  console.log(`📡 API: http://127.0.0.1:${PORT}/api/health`);
-  console.log(`🎬 TorrServer URL: ${TORRSERVER_URL}`);
-  if (!TMDB_API_KEY || TMDB_API_KEY === 'your_tmdb_key_here') {
-    console.log('⚠️  TMDB_API_KEY not configured - movie/TV search will be limited');
-  }
-});
+(async () => {
+  await setupProxy();
+  app.listen(PORT, () => {
+    console.log(`🚀 Stream Vault running at http://127.0.0.1:${PORT}`);
+    console.log(`📡 API: http://127.0.0.1:${PORT}/api/health`);
+    console.log(`🎬 TorrServer URL: ${TORRSERVER_URL}`);
+    if (!TMDB_API_KEY || TMDB_API_KEY === 'your_tmdb_key_here') {
+      console.log('⚠️  TMDB_API_KEY not configured - movie/TV search will be limited');
+    }
+  });
+})();
