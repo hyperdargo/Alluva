@@ -2233,7 +2233,7 @@ async function renderDetails(container, details, type) {
         <div id="directTabContent" style="display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2);">
           <div class="ad-notice" id="directHintText">
             Direct Play servers may contain ads. 
-            <a href="https://chromewebstore.google.com/detail/adblock-%E2%80%94-block-ads-acros/gighmmpiobklfepjocnamgkkbiglidom" target="_blank">Install AdBlock (Chrome/Brave)</a>
+            <a href="https://chromewebstore.google.com/detail/adguard-adblocker/bgnkhhnnamicmpeenaelnjfhikgbkllg" target="_blank">Install AdGuard (Chrome/Brave)</a>
           </div>
           <div class="ad-notice">
             Volume too low? 
@@ -2762,6 +2762,22 @@ async function renderDetails(container, details, type) {
       grid.appendChild(card);
     });
     document.querySelector('.detail-info-card').after(wrap);
+  }
+
+  // Mobile: move episode grid above info card (inside .theater-middle)
+  const theaterLeft = document.getElementById('theaterLeft');
+  const infoCard = document.querySelector('.detail-info-card');
+  if (theaterLeft && infoCard) {
+    const isMobile = window.matchMedia('(max-width: 900px)');
+    const moveLeft = () => {
+      if (isMobile.matches && theaterLeft.parentElement !== infoCard.parentElement) {
+        infoCard.parentElement.insertBefore(theaterLeft, infoCard);
+      } else if (!isMobile.matches && theaterLeft.parentElement !== document.querySelector('.theater-layout')) {
+        document.querySelector('.theater-layout')?.insertBefore(theaterLeft, document.querySelector('.theater-middle'));
+      }
+    };
+    moveLeft();
+    isMobile.addEventListener('change', moveLeft);
   }
 }
 

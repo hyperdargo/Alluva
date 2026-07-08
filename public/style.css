@@ -2977,6 +2977,15 @@ ul, ol {
 .aniwave-server-btn:hover { background: rgba(255,255,255,0.1); color: var(--color-text); }
 .aniwave-server-btn.active { background: var(--color-accent-primary); color: #fff; }
 
+/* Theater-left inside middle on mobile */
+.theater-middle > .theater-left {
+  order: 0 !important;
+  max-height: 250px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 900px) {
   .theater-layout {
