@@ -1,138 +1,34 @@
-# 🎬 Stream Vault
-> Your Personal Media Hub for Anime, Movies & TV Shows
+<p align="center">
+  <img src="public/favicon.svg" alt="Stream Vault Logo" width="80" height="80">
+  <h1 align="center">Stream Vault</h1>
+  <p align="center">Your Personal Media Hub for Anime, Movies & TV Shows</p>
+</p>
 
-<div align="center">
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/Version-1.0.6-success.svg" alt="Version"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-16%2B-green.svg" alt="Node.js"></a>
+  <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg" alt="Status">
+</p>
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.6-success.svg)](package.json)
-[![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org)
-[![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)](#)
-
-```
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║   ███████╗████████╗██████╗ ███████╗ █████╗ ███╗   ███╗      ║
-║   ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██╔══██╗████╗ ████║      ║
-║   ███████╗   ██║   ██████╔╝█████╗  ███████║██╔████╔██║      ║
-║   ╚════██║   ██║   ██╔══██╗██╔══╝  ██╔══██║██║╚██╔╝██║      ║
-║   ███████║   ██║   ██║  ██║███████╗██║  ██║██║ ╚═╝ ██║      ║
-║   ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝      ║
-║                                                               ║
-║             🚀 Self-Hosted Personal Media Hub 🚀             ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-```
-
-</div>
-
----
-
-## ✨ What's New in v1.0.6?
-
-v1.0.6 delivers a major stability and content-filtering overhaul, along with full anime segregation and a redesigned suggestion system.
-
-### 🎬 Anime Separation
-
-- **Japanese animation is fully segregated** from Movies and TV Shows — anime only appears in the Anime section.
-- Applied to all home page sections, discover endpoints, and search results.
-- TMDB Japanese animation fallback merged into search results for better anime discovery.
-
-### 🛡️ Robust 18+ Content Filtering
-
-- **Multi-signal adult content detection** on both server and client:
-  - TMDB `adult` flag, AniList `isAdult` flag
-  - Genre name detection (hentai, adult 18+, erotica, pornography)
-  - Genre ID 99999 sentinel blocking
-  - Drama + Romance + History genre combination detection
-  - Title and overview keyword scanning
-- Applied to every TMDB endpoint: trending, upcoming, top-rated, discover, search, Hindi content.
-
-### 📋 Suggestion System
-
-- **Full-page suggestions view** with three channels: Notice, Suggestion, Status.
-- **Tag-based workflow**: under-review → implemented → rejected.
-- **Tag filter pills** in the Status tab (All, Under Review, Implemented, Rejected).
-- **Admin controls**: set tags, reply to suggestions, manage workflow.
-- **Auto-admin** assigned to user `DargoTamber` on signup.
-- **Edit own suggestions** with inline editing.
-- **Duplicate detection** with warning message.
-
-### 🎨 Hero Banner & Navigation
-
-- **Arrow navigation** buttons on hero banner (left/right) with fade-in on hover.
-- **Swipe gesture support** for mobile.
-- VLC/torrent streaming guide moved to drawer collapsible section.
-
-### 🌐 Language Filter
-
-- **16-language filter** for Movies and TV Shows views, sent to TMDB as `&with_original_language=`.
-- Bollywood "View All" auto-sets language to Hindi.
-
-### 🔧 Bug Fixes & Performance
-
-- Fixed `filterAdult()` crash on AniList items with object titles (`TypeError: toLowerCase is not a function`).
-- Fixed `sortByDate()` mutating original data arrays (uses `.slice().sort()` now).
-- Fixed filter pills showing wrong sort order (trending/top no longer sorted by release date).
-- Fixed home feed failing to fetch — each section isolated in its own try/catch.
-- Fixed server crash when TMDB API key is not configured.
-- Fixed auto-admin not working with case variations.
-- Responsive 3-row grid system based on screen width.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/30ea9e94-b430-4723-a802-bfba024665c2" alt="Stream Vault Screenshot" width="800">
+</p>
 
 ---
 
 ## ✨ Features
 
-<div align="center">
-
-| Feature | Description |
-|---------|-------------|
-| 🔍 **Lightning Fast Search** | Discover content concurrently from all your Prowlarr indexers + YTS direct |
-| 📺 **Metadata Hub** | Enriched information from AniList (anime) and TMDB (movies/shows) |
-| 🎥 **In-Browser Playback** | Stream directly in your browser without downloads |
-| 🚀 **Native Player Support** | One-click stream routing to VLC & MPV media players |
-| 📱 **Responsive Design** | Works seamlessly on desktop, tablet, and mobile |
-| 🔐 **Private & Secure** | 100% self-hosted, no data leaves your server |
-| 🎨 **Modern UI** | Beautiful dark-themed interface with smooth animations |
-
-</div>
-
----
-
-## 🎯 Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                   STREAM VAULT SYSTEM                   │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│   Frontend                 Backend             External │
-│   ┌──────────────┐    ┌────────────────┐   ┌──────────┐ │
-│   │   React UI   │───▶│ Express Server │──▶│ Prowlarr ││
-│   │  (Responsive)│    │   (Node.js)    │   │ Indexers │ │
-│   └──────────────┘    └────────────────┘   └──────────┘ │
-│         │                     │                    │    │
-│         │                     ▼                    │    │
-│         │              ┌──────────────┐           │     │
-│         │              │ Metadata APIs│◀──────────┘    │
-│         │              │ (AniList,    │                 │
-│         │              │  TMDB)       │                 │
-│         │              └──────────────┘                 │
-│         │                     │                         │
-│         └─────────────┬───────┘                         │
-│                       ▼                                 │
-│              ┌─────────────────┐                        │
-│              │  Cache Layer    │                        │
-│              │ (Session-Only)  │                        │
-│              └─────────────────┘                        │
-│                       │                                 │
-│                       ▼                                 │
-│              ┌─────────────────┐                        │
-│              │  Media Player   │                        │
-│              │ (HTML5/VLC/MPV) │                        │
-│              └─────────────────┘                        │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+- **Direct Play** first stream plays instantly via dedicated direct-play servers
+- **Torrent Streaming** download media or play via VLC using the browser extension
+- **Search** concurrent results from Prowlarr indexers + YTS
+- **Metadata** enriched from AniList (anime) and TMDB (movies/shows)
+- **Stream** directly in browser or route to VLC/MPV
+- **Anime & Movies & TV** separated sections with per-section filters
+- **Language Filter** 16-language dropdown for Movies & TV
+- **Suggestion System** three-channel notice/suggestion/status with admin workflow and tag-based filtering
+- **Responsive** dark UI built with vanilla JS
+- **Self-hosted** — no data leaves your server
 
 ---
 
@@ -140,192 +36,148 @@ v1.0.6 delivers a major stability and content-filtering overhaul, along with ful
 
 ### Prerequisites
 
-- **Node.js** 16.0 or higher
-- **npm** or **yarn** package manager
-- **Prowlarr** Server (Highly recommended for indexer management)
-- **API Keys**:
-  - TMDB API Key (for movies/TV metadata)
+- **Node.js** 16.0+
+- **Prowlarr** Server (recommended)
+- **TMDB API Key**
 
-### Installation
+### Quick Start
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/yourusername/stream-vault.git
-   cd stream-vault
-   ```
+```bash
+git clone https://github.com/yourusername/stream-vault.git
+cd stream-vault
+npm install
+```
 
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+Create a `.env` file:
 
-3. **Configure Environment Variables**
-   Create a `.env` file in the root with your configuration:
-   ```env
-   PORT=3000
-   TORZNAB_API_KEY=your_prowlarr_key
-   TORZNAB_BASE_URL=https://your-prowlarr-instance.com/api
-   TMDB_API_KEY=your_tmdb_api_key
-   ```
+```env
+PORT=3000
+TORZNAB_API_KEY=your_prowlarr_key
+TORZNAB_BASE_URL=https://your-prowlarr-instance.com/api
+TMDB_API_KEY=your_tmdb_api_key
+```
 
-4. **Start the Application**
-   ```bash
-   npm start
-   ```
-   
-   Visit `http://localhost:3000` in your browser
+Start the server:
+
+```bash
+npm start
+```
+
+Visit `http://localhost:3000`
 
 ---
 
 ## 📋 Data Sources
 
-### Supported Torrent Indexers
+### Torrent Indexers
 
-Stream Vault now perfectly maps to your Prowlarr instance. Just add these to Prowlarr and Stream Vault will automatically pick them up!
+| Indexer | Content | Integration |
+| --- | --- | --- |
+| The Pirate Bay | Movies/Shows | Prowlarr Native |
+| YTS | HD Movies | Direct Scraper |
+| Nyaa.si | Anime | Prowlarr Native / Direct |
+| EZTV | TV Shows | Prowlarr Native |
+| LimeTorrents | All | Prowlarr Native |
+| Torrentsome | All | Prowlarr Native |
+| SkTorrent | All | Prowlarr Native |
+| 1337x / Ext.to | Movies/Shows | Add to Prowlarr |
 
-| Indexer | Content Type | Integration |
-|---------|--------------|--------|
-| 🐉 **The Pirate Bay** | Movies/Shows | ✅ Prowlarr Native |
-| 🍿 **YTS** | HD Movies | ✅ Direct Web Scraper (`yts.gg`) |
-| 🍚 **Nyaa.si** | Anime | ✅ Prowlarr Native / Direct |
-| 📺 **EZTV** | TV Shows | ✅ Prowlarr Native |
-| 🍋 **LimeTorrents** | All Content | ✅ Prowlarr Native |
-| 🎬 **Torrentsome** | All Content | ✅ Prowlarr Native |
-| ⚡ **SkTorrent** | All Content | ✅ Prowlarr Native |
-| 🔥 **1337x / Ext.to** | Movies/Shows | ℹ️ Add to Prowlarr to use |
+### Direct Play Sources
 
-### Metadata APIs
+| Source | Content | Type |
+| --- | --- | --- |
+| Multi-server direct-play backends | Movies / TV / Anime | Instant stream (no download) |
 
-- **AniList** - Comprehensive anime metadata and information
-- **TMDB** - Movies and TV shows with ratings, posters, and details
+### Metadata
+
+- **AniList** — anime metadata
+- **TMDB** — movies & TV metadata
 
 ---
 
 ## 🔧 Configuration
 
-### Environment Variables
-
 ```env
-# Server Configuration
-PORT=3000                                    # Server port
-
-# Prowlarr/Torznab Configuration
-TORZNAB_API_KEY=your_api_key                 # Your Prowlarr API key
-TORZNAB_BASE_URL=https://your-instance.com   # Your Prowlarr base URL
-
-# API Keys
-TMDB_API_KEY=your_tmdb_key                   # TMDB API key for metadata
+PORT=3000
+TORZNAB_API_KEY=your_api_key
+TORZNAB_BASE_URL=https://your-instance.com
+TMDB_API_KEY=your_tmdb_key
 ```
 
 ---
 
 ## 💾 Project Structure
 
-```text
-stream-vault/
-├── public/                 # Frontend files
-│   ├── index.html         # Main HTML UI
-│   ├── app.js             # Frontend Vanilla JS
-│   ├── style.css          # Styling (CSS Variables, Dark Mode)
-│   ├── manifest.json      # PWA manifest
-│   └── favicon.svg        # Icon
-├── server.js              # Express backend & SSE Engine
-├── package.json           # Dependencies & scripts
-├── .env                   # Environment variables (create locally)
-├── .gitignore             # Git ignore rules
-├── README.md              # This file
-└── LICENSE                # MIT License
 ```
-
----
-
-## 🔐 Security Features
-
-✅ **Privacy First**
-- No external logging of your searches
-- No telemetry or tracking
-- Self-hosted means complete data control
-
-✅ **Local Processing**
-- All metadata caching happens in-session
-- Auto-cleanup on browser close
-- No persistent user data storage
+stream-vault/
+├── extension/                     # Browser extension
+│   ├── EXTENSION_SETUP.md
+│   ├── background.js
+│   ├── content.js
+│   ├── icon.png
+│   ├── manifest.json
+│   ├── popup.html
+│   ├── popup.js
+│   ├── settings.html
+│   └── settings.js
+├── native-host/                   # Native messaging host (VLC launcher)
+│   ├── com.streamvault.launcher.json
+│   ├── host.js
+│   ├── host.log
+│   ├── install_host.bat
+│   └── run_host.bat
+├── public/
+│   ├── icons/
+│   │   ├── android-chrome-192x192.png
+│   │   ├── android-chrome-512x512.png
+│   │   ├── apple-touch-icon.png
+│   │   ├── favicon-16x16.png
+│   │   ├── favicon-32x32.png
+│   │   ├── favicon.ico
+│   │   └── site.webmanifest
+│   ├── app.js
+│   ├── favicon.svg
+│   ├── index.html
+│   ├── manifest.json
+│   ├── style.css
+│   ├── sw.js
+│   └── theme.css
+├── routes/
+│   └── stream.js
+├── .env
+├── .env.example
+├── .gitignore
+├── CHANGELOG.md
+├── README.md
+├── catalog.json
+├── main.js
+├── package-lock.json
+├── package.json
+├── server.js
+├── suggestions.json
+└── users.json
+```
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Here's how you can help:
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
----
-
-## 🐛 Troubleshooting
-
-### API Connection Issues
-- Verify Prowlarr is running and accessible
-- Check API key in `.env`
-- Ensure TORZNAB_BASE_URL is correct (e.g. `http://localhost:9696`)
-- Check firewall rules
-
-### Empty Search Results
-- Verify at least one indexer is configured in Prowlarr
-- Check internet connection
-- Try searching with different keywords
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes
+4. Open a Pull Request
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License**.
-
-```text
-MIT License
+MIT License — see [LICENSE](LICENSE) for details.
 
 Copyright (c) 2026 DTEmpire (DargoTamber)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
-
 ---
 
-## 🌟 Show Your Support
-
-If you find Stream Vault helpful, please:
-
-- ⭐ **Star** the repository
-- 🐛 **Report** bugs or issues
-- 💡 **Suggest** new features
-- 📤 **Share** with others
-- 🤝 **Contribute** code or documentation
-
----
-
-<div align="center">
-
-### Made with ❤️ for the Media Streaming Community
-
-**© copyright by DTEmpire (DargoTamber) | version 1.0.6**
-
-```text
-█████████████████████████████████████████████
-█                                           █
-█   Happy Streaming! Enjoy Stream Vault ✨  █
-█                                           █
-█████████████████████████████████████████████
-```
-
-</div>
+<p align="center">
+  Made with ❤️ for the Media Streaming Community<br>
+  <strong>© DTEmpire (DargoTamber) | v1.0.6</strong>
+</p>
