@@ -43,10 +43,11 @@ const state = {
   lastTorrentCategory: null,
   lastTorrentEpisode: null,
   lastTorrentSeason: null,
-  auth: { token: localStorage.getItem('sv_token'), username: localStorage.getItem('sv_username') },
+  auth: { token: localStorage.getItem('sv_token'), username: localStorage.getItem('sv_username'), isAdmin: localStorage.getItem('sv_isAdmin') === 'true' },
   vlcExtensionId: 'ihpiinojhnfhpdmmacgmpoonphhimkaj', // Open in VLC extension ID
   sortWebRipFirst: false,
   plyrInstance: null,
+  pillPreset: null,
   currentPage: 1,
   isLoadingPage: false,
   currentCategory: null,
@@ -230,34 +231,6 @@ async function fetchWithAuth(url, options = {}) {
   return fetch(url, { ...options, headers });
 }
 
-function updateAuthUI() {
-  const closeDrawer = () => {
-    const sd = document.getElementById('sideDrawer');
-    const ov = document.getElementById('sideDrawerOverlay');
-    if (sd) sd.classList.remove('open');
-    if (ov) ov.classList.remove('open');
-  };
-  const updateBtn = (btn, label, isLoggedIn) => {
-    if (!btn) return;
-    btn.innerHTML = label;
-    btn.onclick = isLoggedIn ? () => {
-      if (confirm('Sign out?')) {
-        state.auth.token = null;
-        state.auth.username = null;
-        localStorage.removeItem('sv_token');
-        localStorage.removeItem('sv_username');
-        updateAuthUI();
-        window.location.reload();
-      }
-    } : () => {
-      closeDrawer();
-      document.getElementById('authModalOverlay').style.display = 'flex';
-    };
-  };
-  const isLoggedIn = state.auth.token && state.auth.username;
-  updateBtn(document.getElementById('authBtn'), isLoggedIn ? state.auth.username : 'Sign In', isLoggedIn);
-  updateBtn(document.getElementById('drawerAuthBtn'), isLoggedIn ? `👤 ${state.auth.username} (Sign Out)` : 'Sign In', isLoggedIn);
-}
 
 let isSignUpMode = false;
 function initAuthModal() {
@@ -303,8 +276,10 @@ function initAuthModal() {
       
       state.auth.token = data.token;
       state.auth.username = data.user.username;
+      state.auth.isAdmin = data.user.isAdmin === true;
       localStorage.setItem('sv_token', data.token);
       localStorage.setItem('sv_username', data.user.username);
+      localStorage.setItem('sv_isAdmin', state.auth.isAdmin);
       
       modal.style.display = 'none';
       updateAuthUI();
@@ -581,6 +556,17 @@ function initNavigation() {
     link.addEventListener('click', closeDrawer);
   });
 
+  // Drawer collapsible sections
+  document.querySelectorAll('.drawer-collapse-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      if (target) {
+        target.classList.toggle('open');
+        btn.classList.toggle('open');
+      }
+    });
+  });
+
   const detailBack = document.getElementById('detailBack');
   if (detailBack) {
     detailBack.addEventListener('click', () => {
@@ -618,7 +604,7 @@ function handleRouting() {
   } else {
     // Standard views: #/home, #/anime, #/movies, #/tv, etc.
     const viewId = hash.replace('#/', '');
-    const validViews = ['home', 'anime', 'movies', 'tv', 'schedule', 'catalog', 'settings'];
+    const validViews = ['home', 'anime', 'movies', 'tv', 'schedule', 'catalog', 'settings', 'suggestions'];
     if (validViews.includes(viewId)) {
       navigateTo(viewId);
     } else {
@@ -681,6 +667,7 @@ function navigateTo(viewId, extraData = null) {
     case 'catalog': loadCatalogView(); break;
     case 'settings': loadSettingsView(); break;
     case 'search': loadSearchView(extraData); break;
+    case 'suggestions': loadSuggestionsView(); break;
   }
 }
 
@@ -709,6 +696,20 @@ function renderHeroBanner(featuredList) {
   const dotsDiv = document.createElement('div');
   dotsDiv.className = 'hero-dots';
   dotsContainer.appendChild(dotsDiv);
+
+  // Arrow buttons
+  const leftArrow = document.createElement('button');
+  leftArrow.className = 'hero-arrow hero-arrow-left';
+  leftArrow.setAttribute('aria-label', 'Previous slide');
+  leftArrow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+
+  const rightArrow = document.createElement('button');
+  rightArrow.className = 'hero-arrow hero-arrow-right';
+  rightArrow.setAttribute('aria-label', 'Next slide');
+  rightArrow.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+
+  container.appendChild(leftArrow);
+  container.appendChild(rightArrow);
 
   featuredList.forEach((item, index) => {
     const slide = document.createElement('div');
@@ -750,7 +751,7 @@ function renderHeroBanner(featuredList) {
     dot.className = `hero-dot ${index === 0 ? 'active' : ''}`;
     dot.dataset.index = index;
     dot.addEventListener('click', () => {
-      setActiveSlide(index);
+      goToSlide(index);
     });
     dotsDiv.appendChild(dot);
   });
@@ -761,7 +762,9 @@ function renderHeroBanner(featuredList) {
   const slides = container.querySelectorAll('.hero-slide');
   const dots = container.querySelectorAll('.hero-dot');
 
-  function setActiveSlide(index) {
+  function goToSlide(index) {
+    if (index < 0) index = slides.length - 1;
+    if (index >= slides.length) index = 0;
     currentSlide = index;
     slides.forEach((slide, i) => {
       if (i === index) slide.classList.add('active');
@@ -771,11 +774,45 @@ function renderHeroBanner(featuredList) {
       if (i === index) dot.classList.add('active');
       else dot.classList.remove('active');
     });
+    clearInterval(heroInterval);
+    heroInterval = setInterval(() => {
+      currentSlide = (currentSlide + 1) % slides.length;
+      goToSlide(currentSlide);
+    }, 4000);
   }
+
+  leftArrow.addEventListener('click', (e) => {
+    e.stopPropagation();
+    goToSlide(currentSlide - 1);
+  });
+  rightArrow.addEventListener('click', (e) => {
+    e.stopPropagation();
+    goToSlide(currentSlide + 1);
+  });
+
+  // Swipe support
+  let startX = 0;
+  let isDragging = false;
+  const onSwipeStart = (x) => { startX = x; isDragging = true; };
+  const onSwipeEnd = (x) => {
+    if (!isDragging) return;
+    isDragging = false;
+    const diff = startX - x;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goToSlide(currentSlide + 1);
+      else goToSlide(currentSlide - 1);
+    }
+  };
+  container.addEventListener('mousedown', (e) => onSwipeStart(e.clientX));
+  container.addEventListener('mousemove', (e) => { if (isDragging) e.preventDefault(); });
+  container.addEventListener('mouseup', (e) => onSwipeEnd(e.clientX));
+  container.addEventListener('mouseleave', () => { isDragging = false; });
+  container.addEventListener('touchstart', (e) => onSwipeStart(e.touches[0].clientX), { passive: true });
+  container.addEventListener('touchend', (e) => onSwipeEnd(e.changedTouches[0].clientX), { passive: true });
 
   heroInterval = setInterval(() => {
     currentSlide = (currentSlide + 1) % slides.length;
-    setActiveSlide(currentSlide);
+    goToSlide(currentSlide);
   }, 4000);
 }
 
@@ -838,8 +875,20 @@ async function loadSearchView(query) {
     const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&indexers=${selectedIndexers}&type=all`);
     const data = await res.json();
 
-    const animeResults = filterAdult(data.anime);
-    const mediaResults = filterAdult(data.media);
+    let animeResults = filterAdult(data.anime || []);
+    // Always merge TMDB fallback anime results for broader matches
+    if (data.anime_fallback && data.anime_fallback.length > 0) {
+      const seen = new Set(animeResults.map(a => (a.id?.toString() || '') + (a.title?.romaji || a.title?.english || a.title?.native || '')));
+      data.anime_fallback.forEach(item => {
+        const key = (item.id?.toString() || '') + (item.title || item.name || '');
+        if (!seen.has(key)) {
+          animeResults.push(item);
+          seen.add(key);
+        }
+      });
+    }
+    let mediaResults = filterAdult(data.media || []);
+    mediaResults = mediaResults.filter(item => !(item.original_language === 'ja' && Array.isArray(item.genre_ids) && item.genre_ids.includes(16)));
     let hasAnime = animeResults.length > 0;
     let hasMedia = mediaResults.length > 0;
 
@@ -885,9 +934,14 @@ function createMediaCard(item, type) {
 
   if (type === 'anime') {
     id = item.id;
-    title = item.title.english || item.title.romaji || item.title.native;
-    rating = item.averageScore ? (item.averageScore / 10).toFixed(1) : 'N/A';
-    poster = item.coverImage.large || item.coverImage.medium;
+    // Handle both AniList and TMDB fallback items
+    if (item.title && typeof item.title === 'object') {
+      title = item.title.english || item.title.romaji || item.title.native;
+    } else {
+      title = item.title || item.name || item.original_title || item.original_name || 'Unknown';
+    }
+    rating = item.averageScore ? (item.averageScore / 10).toFixed(1) : (item.vote_average ? item.vote_average.toFixed(1) : 'N/A');
+    poster = item.coverImage?.large || item.coverImage?.medium || getPosterUrl(item.poster_path);
   } else if (type === 'movie' || type === 'tv') {
     id = item.id;
     title = type === 'movie' ? (item.title || item.original_title) : (item.name || item.original_name);
@@ -1020,109 +1074,174 @@ async function loadHomeView() {
   renderContinueWatching();
   renderMyList();
 
-  const animeGrid = document.getElementById('trendingAnimeGrid');
-  const moviesGrid = document.getElementById('popularMoviesGrid');
-  const tvGrid = document.getElementById('trendingTVGrid');
-  const upcomingMoviesGrid = document.getElementById('upcomingMoviesGrid');
-  const topRatedMoviesGrid = document.getElementById('topRatedMoviesGrid');
-  const topRatedTVGrid = document.getElementById('topRatedTVGrid');
-  const upcomingAnimeGrid = document.getElementById('upcomingAnimeGrid');
-  const torrentsGrid = document.getElementById('recentTorrentsGrid');
+  const grids = {
+    anime: document.getElementById('sectionAnimeGrid'),
+    bollyMovies: document.getElementById('sectionBollyMoviesGrid'),
+    hollyMovies: document.getElementById('sectionHollyMoviesGrid'),
+    hollyTV: document.getElementById('sectionHollyTVGrid'),
+    torrents: document.getElementById('recentTorrentsGrid')
+  };
 
   const fillSkeletons = (el, count = 16) => {
     if (el) el.innerHTML = Array(count).fill('<div class="media-card poster-card skeleton"></div>').join('');
   };
 
-  fillSkeletons(animeGrid);
-  fillSkeletons(moviesGrid);
-  fillSkeletons(tvGrid);
-  fillSkeletons(upcomingMoviesGrid);
-  fillSkeletons(topRatedMoviesGrid);
-  fillSkeletons(topRatedTVGrid);
-  fillSkeletons(upcomingAnimeGrid);
-  fillSkeletons(torrentsGrid);
+  Object.values(grids).forEach(g => { if (g && g !== grids.torrents) fillSkeletons(g); });
+  if (grids.torrents) fillSkeletons(grids.torrents, 8);
 
   try {
     const res = await fetch('/api/trending');
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
     const data = await res.json();
 
-    // Render Hero Banner
+    const safe = (fn, fallback) => { try { return fn(); } catch (e) { console.error('Home section error:', e.message, e.stack); return fallback; } };
+
     if (data.featured) {
-      renderHeroBanner(data.featured);
+      try { renderHeroBanner(data.featured); } catch (e) { console.error('Hero error:', e); }
     }
 
+    const gridRows = getGridCount(3);
     const populateGrid = (grid, items, type, emptyMsg) => {
       if (!grid) return;
       grid.innerHTML = '';
       if (items && items.length > 0) {
-        items.slice(0, 16).forEach(item => {
-          grid.appendChild(createMediaCard(item, type));
-        });
+        items.slice(0, gridRows).forEach(item => grid.appendChild(createMediaCard(item, type)));
       } else {
         grid.innerHTML = `<div class="empty-state"><p>${emptyMsg}</p></div>`;
       }
     };
 
-    populateGrid(animeGrid, filterAdult(data.anime), 'anime', 'No trending anime found');
-    populateGrid(moviesGrid, filterAdult(data.movies), 'movie', 'No popular movies found');
-    populateGrid(tvGrid, filterAdult(data.tv), 'tv', 'No popular TV shows found');
-    populateGrid(upcomingMoviesGrid, filterAdult(data.upcomingMovies), 'movie', 'No upcoming movies found');
-    populateGrid(topRatedMoviesGrid, filterAdult(data.topRatedMovies), 'movie', 'No top rated movies found');
-    populateGrid(topRatedTVGrid, filterAdult(data.topRatedTV), 'tv', 'No top rated TV shows found');
-    populateGrid(upcomingAnimeGrid, filterAdult(data.upcomingAnime), 'anime', 'No upcoming anime found');
+    const sortByDate = (items) => (items || []).slice().sort((a, b) => {
+      const da = a.release_date || a.first_air_date || a.startDate?.year || '';
+      const db = b.release_date || b.first_air_date || b.startDate?.year || '';
+      return db.toString().localeCompare(da.toString());
+    });
 
-    if (torrentsGrid) {
-      torrentsGrid.innerHTML = '';
-      if (data.torrents && data.torrents.length > 0) {
-        data.torrents.slice(0, 16).forEach(item => {
-          const itemCard = document.createElement('div');
-          itemCard.className = 'torrent-item';
-          const qual = parseQuality(item.title);
-          const ext = parseExtension(item.title);
-          const sizeFormatted = formatBytes(item.size);
+    const dedup = (items) => {
+      const seen = new Set();
+      return (items || []).filter(item => {
+        const key = item.id?.toString() + '_' + (item.media_type || '');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    };
 
-          itemCard.innerHTML = `
-            <div class="torrent-info">
-              <h4 class="torrent-title" title="${item.title}">${item.title}</h4>
-              <div class="torrent-meta">
-                <span class="torrent-quality">${qual}</span>
-                ${ext ? `<span class="torrent-quality">${ext}</span>` : ''}
-                <span class="torrent-size">${sizeFormatted}</span>
-                <span class="torrent-seeders">⬆ ${item.seeders}</span>
-                <span>${item.source}</span>
+    const noAnime = (items) => (items || []).filter(item => !(item.original_language === 'ja' && Array.isArray(item.genre_ids) && item.genre_ids.includes(16)));
+
+    safe(() => populateGrid(grids.anime, sortByDate(filterAdult(data.airingAnime)), 'anime', 'No anime found'));
+    safe(() => populateGrid(grids.bollyMovies, sortByDate(filterAdult(data.hindiMovies)), 'movie', 'No Bollywood movies found'));
+    safe(() => populateGrid(grids.hollyMovies, dedup(noAnime(filterAdult(data.movies))), 'movie', 'No movies found'));
+    safe(() => populateGrid(grids.hollyTV, dedup(noAnime(filterAdult(data.tv))), 'tv', 'No TV shows found'));
+
+    safe(() => {
+      if (grids.torrents) {
+        grids.torrents.innerHTML = '';
+        if (data.torrents && data.torrents.length > 0) {
+          data.torrents.slice(0, gridRows).forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'torrent-item';
+            const q = parseQuality(item.title);
+            const e = parseExtension(item.title);
+            card.innerHTML = `
+              <div class="torrent-info">
+                <h4 class="torrent-title" title="${item.title}">${item.title}</h4>
+                <div class="torrent-meta">
+                  <span class="torrent-quality">${q}</span>${e ? `<span class="torrent-quality">${e}</span>` : ''}
+                  <span class="torrent-size">${formatBytes(item.size)}</span>
+                  <span class="torrent-seeders">⬆ ${item.seeders}</span>
+                  <span>${item.source}</span>
+                </div>
               </div>
-            </div>
-            <div class="torrent-actions">
-              <button class="torrent-btn play-btn" title="Play in browser">▶</button>
-              <button class="torrent-btn vlc-btn" title="Open in VLC">🎬</button>
-              <button class="torrent-btn mpv-btn" title="Open in MPV">📺</button>
-              <button class="torrent-btn magnet-btn" title="Copy Magnet">📋</button>
-            </div>
-          `;
-
-          itemCard.querySelector('.play-btn').addEventListener('click', () => {
-            playTorrent(item.title, item.magnet, { title: item.title, poster: '' });
+              <div class="torrent-actions">
+                <button class="torrent-btn play-btn" title="Play">▶</button>
+                <button class="torrent-btn vlc-btn" title="VLC">🎬</button>
+                <button class="torrent-btn mpv-btn" title="MPV">📺</button>
+                <button class="torrent-btn magnet-btn" title="Magnet">📋</button>
+              </div>`;
+            card.querySelector('.play-btn').addEventListener('click', () => playTorrent(item.title, item.magnet, { title: item.title, poster: '' }));
+            card.querySelector('.vlc-btn').addEventListener('click', () => resolveTorrentAndPlay(item.magnet, 'vlc', item.title));
+            card.querySelector('.mpv-btn').addEventListener('click', () => resolveTorrentAndPlay(item.magnet, 'mpv', item.title));
+            card.querySelector('.magnet-btn').addEventListener('click', () => { navigator.clipboard.writeText(item.magnet); showToast('Copied!', 'success'); });
+            grids.torrents.appendChild(card);
           });
-
-          itemCard.querySelector('.vlc-btn').addEventListener('click', () => {
-            resolveTorrentAndPlay(item.magnet, 'vlc', item.title);
-          });
-
-          itemCard.querySelector('.mpv-btn').addEventListener('click', () => {
-            resolveTorrentAndPlay(item.magnet, 'mpv', item.title);
-          });
-
-          itemCard.querySelector('.magnet-btn').addEventListener('click', () => {
-            navigator.clipboard.writeText(item.magnet);
-            showToast('Magnet link copied to clipboard!', 'success');
-          });
-
-          torrentsGrid.appendChild(itemCard);
-        });
-      } else {
-        torrentsGrid.innerHTML = '<div class="empty-state"><p>No recent torrents found.</p></div>';
+        } else {
+          grids.torrents.innerHTML = '<div class="empty-state"><p>No recent torrents found.</p></div>';
+        }
       }
-    }
+    });
+
+    // Wire per-section filter pills
+    safe(() => {
+      const sectionConfig = {
+        filterAnime: {
+          trending: { items: data.anime, type: 'anime', grid: 'sectionAnimeGrid' },
+          airing: { items: data.airingAnime, type: 'anime', grid: 'sectionAnimeGrid' },
+          upcoming: { items: data.upcomingAnime, type: 'anime', grid: 'sectionAnimeGrid' }
+        },
+        filterBollyMovies: {
+          latest: { items: data.hindiMovies, type: 'movie', grid: 'sectionBollyMoviesGrid' },
+          upcoming: { items: data.upcomingHindiMovies, type: 'movie', grid: 'sectionBollyMoviesGrid' }
+        },
+        filterHollyMovies: {
+          trending: { items: data.movies, type: 'movie', grid: 'sectionHollyMoviesGrid' },
+          top: { items: data.topRatedMovies, type: 'movie', grid: 'sectionHollyMoviesGrid' },
+          upcoming: { items: data.upcomingMovies, type: 'movie', grid: 'sectionHollyMoviesGrid' }
+        },
+        filterHollyTV: {
+          trending: { items: data.tv, type: 'tv', grid: 'sectionHollyTVGrid' },
+          top: { items: data.topRatedTV, type: 'tv', grid: 'sectionHollyTVGrid' }
+        }
+      };
+
+      Object.entries(sectionConfig).forEach(([filterId, types]) => {
+        const pills = document.querySelectorAll(`#${filterId} .filter-pill`);
+        pills.forEach(btn => {
+          btn.addEventListener('click', () => {
+            pills.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const cfg = types[btn.dataset.type];
+            if (cfg) {
+              const g = document.getElementById(cfg.grid);
+              if (g) {
+                g.innerHTML = '';
+                let items = filterAdult(cfg.items);
+                if (cfg.type === 'movie' || cfg.type === 'tv') {
+                  items = noAnime(items);
+                  items = dedup(items);
+                }
+                // Only sort by date for sections where date order makes sense
+                if (btn.dataset.type === 'upcoming' || btn.dataset.type === 'airing' || btn.dataset.type === 'latest') {
+                  items = sortByDate(items);
+                }
+                if (items.length > 0) {
+                  items.slice(0, gridRows).forEach(item => g.appendChild(createMediaCard(item, cfg.type)));
+                } else {
+                  g.innerHTML = '<div class="empty-state"><p>No results</p></div>';
+                }
+              }
+            }
+          });
+        });
+      });
+
+      // Section pill passthrough: View All links carry active pill state
+      document.querySelectorAll('.section-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          const section = link.closest('.content-section');
+          if (!section) return;
+          const activePill = section.querySelector('.filter-pill.active');
+          if (!activePill) return;
+          const pillType = activePill.dataset.type;
+          const targetView = link.dataset.view;
+          const sectionId = section.id || '';
+          const language = sectionId.includes('Bolly') ? 'hi' : '';
+          if (pillType && targetView) {
+            state.pillPreset = { view: targetView, type: pillType, language };
+          }
+        });
+      });
+    });
 
   } catch (err) {
     console.error(err);
@@ -1158,6 +1277,15 @@ async function loadAnimeView(page = 1) {
   state.isLoadingPage = true;
   populateYearFilters('animeYearFilter');
 
+  // Apply pill preset if coming from section View All
+  if (page === 1 && state.pillPreset && state.pillPreset.view === 'anime') {
+    const statusMap = { trending: '', airing: 'RELEASING', upcoming: 'NOT_YET_RELEASED' };
+    const presetStatus = statusMap[state.pillPreset.type] || '';
+    document.getElementById('animeStatusFilter').value = presetStatus;
+    state.pillPreset = null;
+  }
+
+  const genre = document.getElementById('animeGenreFilter')?.value || '';
   const season = document.getElementById('animeSeasonFilter').value;
   const year = document.getElementById('animeYearFilter').value;
   const status = document.getElementById('animeStatusFilter').value;
@@ -1173,7 +1301,9 @@ async function loadAnimeView(page = 1) {
     } else {
       url = `/api/discover?type=anime&page=${page}`;
       if (year) url += `&year=${year}`;
-      // Currently not filtering genre for anime via api due to missing genre dropdown, but ready for future
+      if (season) url += `&season=${season}`;
+      if (status) url += `&status=${status}`;
+      if (genre) url += `&genre=${encodeURIComponent(genre)}`;
     }
 
     const res = await fetch(url);
@@ -1192,10 +1322,6 @@ async function loadAnimeView(page = 1) {
       if (searchString) {
         if (season) filtered = filtered.filter(item => item.season === season);
         if (year) filtered = filtered.filter(item => item.startDate?.year == year);
-        if (status) filtered = filtered.filter(item => item.status === status);
-      } else {
-        // API already filters year, so just filter status/season client side if needed
-        if (season) filtered = filtered.filter(item => item.season === season);
         if (status) filtered = filtered.filter(item => item.status === status);
       }
 
@@ -1256,19 +1382,29 @@ async function loadMoviesView(page = 1) {
 
   const year = document.getElementById('movieYearFilter').value;
   const genre = document.getElementById('movieGenreFilter').value;
+  // Apply pill preset for Bollywood → Hindi
+  if (page === 1 && state.pillPreset && state.pillPreset.view === 'movies') {
+    if (state.pillPreset.language) {
+      document.getElementById('movieLanguageFilter').value = state.pillPreset.language;
+    }
+    state.pillPreset = null;
+  }
+
+  const language = document.getElementById('movieLanguageFilter')?.value || '';
 
   try {
     const searchString = document.getElementById('searchInput').value.trim();
     let url = '';
     
-    // Search is handled client-side without infinite scroll currently
     if (searchString) {
       if (page > 1) { state.isLoadingPage = false; return; }
       url = `/api/search?type=movie&q=${encodeURIComponent(searchString)}`;
+      if (language) url += `&language=${language}`;
     } else {
       url = `/api/discover?type=movie&page=${page}`;
       if (year) url += `&year=${year}`;
       if (genre) url += `&genre=${genre}`;
+      if (language) url += `&language=${language}`;
     }
 
     const res = await fetch(url);
@@ -1294,7 +1430,7 @@ async function loadMoviesView(page = 1) {
         populateGenres(items, 'movieGenreFilter');
       }
 
-      filtered = filterAdult(filtered);
+      filtered = filterAdult(filtered).filter(item => !(item.original_language === 'ja' && Array.isArray(item.genre_ids) && item.genre_ids.includes(16)));
       filtered.forEach(item => {
         grid.appendChild(createMediaCard(item, 'movie'));
       });
@@ -1332,6 +1468,14 @@ async function loadTVView(page = 1) {
 
   const year = document.getElementById('tvYearFilter').value;
   const genre = document.getElementById('tvGenreFilter').value;
+  if (page === 1 && state.pillPreset && state.pillPreset.view === 'tv') {
+    if (state.pillPreset.language) {
+      document.getElementById('tvLanguageFilter').value = state.pillPreset.language;
+    }
+    state.pillPreset = null;
+  }
+
+  const language = document.getElementById('tvLanguageFilter')?.value || '';
 
   try {
     const searchString = document.getElementById('searchInput').value.trim();
@@ -1340,10 +1484,12 @@ async function loadTVView(page = 1) {
     if (searchString) {
       if (page > 1) { state.isLoadingPage = false; return; }
       url = `/api/search?type=tv&q=${encodeURIComponent(searchString)}`;
+      if (language) url += `&language=${language}`;
     } else {
       url = `/api/discover?type=tv&page=${page}`;
       if (year) url += `&year=${year}`;
       if (genre) url += `&genre=${genre}`;
+      if (language) url += `&language=${language}`;
     }
 
     const res = await fetch(url);
@@ -1369,7 +1515,7 @@ async function loadTVView(page = 1) {
         populateGenres(items, 'tvGenreFilter');
       }
 
-      filtered = filterAdult(filtered);
+      filtered = filterAdult(filtered).filter(item => !(item.original_language === 'ja' && Array.isArray(item.genre_ids) && item.genre_ids.includes(16)));
       filtered.forEach(item => {
         grid.appendChild(createMediaCard(item, 'tv'));
       });
@@ -3269,15 +3415,624 @@ function initCatalogModal() {
   }
 }
 
+function getResponsiveCount(basePerRow = 6) {
+  const w = window.innerWidth;
+  if (w < 480) return basePerRow * 1;      // 1 row on phones
+  if (w < 768) return basePerRow * 2;      // 2 rows on small tablets
+  return basePerRow * 3;                   // 3 rows on desktop
+}
+
+function getGridItemsPerRow() {
+  const w = window.innerWidth;
+  if (w < 480) return 2;
+  if (w < 640) return 3;
+  if (w < 1024) return 4;
+  if (w < 1400) return 5;
+  return 6;
+}
+
+function getGridCount(rows = 3) {
+  return getGridItemsPerRow() * rows;
+}
+
 function filterAdult(items) {
   if (state.preferences.enableAdultContent) return items;
   return (items || []).filter(item => {
-    if (item.adult === true) return false;
+    // 1. TMDB adult flag (loose check for boolean, number, or string)
+    if (item.adult == true || item.adult === 1 || item.adult === 'true') return false;
+    // 2. AniList adult flag
     if (item.isAdult === true) return false;
-    if (item.genres && Array.isArray(item.genres) && item.genres.some(g => g === 'Hentai' || g.name === 'Hentai' || g.name === 'Adult 18+')) return false;
-    if (item.genre_ids && Array.isArray(item.genre_ids) && item.genre_ids.some(id => id === 99999)) return false;
+    // 3. Genre name check (Hentai, Adult 18+, Erotica)
+    if (item.genres && Array.isArray(item.genres) && item.genres.some(g => {
+      if (!g) return false;
+      const name = (typeof g === 'string' ? g : (g.name || '')).toLowerCase();
+      return name === 'hentai' || name === 'adult 18+' || name === 'erotica' || name === 'pornography';
+    })) return false;
+    // 4. Genre ID 99999 sentinel
+    if (item.genre_ids && Array.isArray(item.genre_ids) && item.genre_ids.includes(99999)) return false;
+    // 5. Drama + Romance + History combo
+    if (item.genre_ids && Array.isArray(item.genre_ids) && item.genre_ids.length >= 3) {
+      if (item.genre_ids.includes(18) && item.genre_ids.includes(10749) && item.genre_ids.includes(36)) return false;
+    }
+    // 6. Title + overview keyword scan for things that slipped through
+    let titleStr = item.title || item.name || item.original_title || item.original_name || '';
+    if (typeof titleStr === 'object') titleStr = titleStr.english || titleStr.romaji || titleStr.native || '';
+    titleStr = titleStr.toLowerCase();
+    const overview = (item.overview || item.description || '').toLowerCase();
+    const adultKeywords = ['hentai', 'sex tape', 'hardcore', 'xxx', 'adult film', 'porn', 'sweet agony'];
+    if (adultKeywords.some(k => titleStr.includes(k) || overview.includes(k))) return false;
     return true;
   });
+}
+
+// ==========================================================================
+// SUGGESTION DRAWER
+// ==========================================================================
+
+function initSuggestionDrawer() {
+  renderSuggestionAuth();
+}
+
+function renderSuggestionAuth() {}
+
+async function loadSuggestionChannel(channel) {
+  const container = document.getElementById('suggestionChannelContent');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:16px;color:#64748b;font-size:13px;">Loading...</div>';
+  try {
+    const res = await fetch(`/api/suggestions?channel=${channel}`);
+    const items = await res.json();
+    container.innerHTML = '';
+    
+    if (channel === 'suggestion' && state.auth.token) {
+      const formDiv = document.createElement('div');
+      formDiv.style.cssText = 'margin-bottom:10px;display:flex;flex-direction:column;gap:6px;';
+      formDiv.innerHTML = `
+        <input type="text" id="suggestionTitle" placeholder="Short title (optional)" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:7px 10px;border-radius:6px;font-size:12px;">
+        <textarea id="suggestionContent" placeholder="Describe your suggestion..." style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:7px 10px;border-radius:6px;font-size:12px;min-height:50px;resize:vertical;"></textarea>
+        <button class="drawer-guide-btn" id="suggestionSubmitBtn" style="width:100%;justify-content:center;">Submit Suggestion</button>
+        <div id="suggestionDuplicateMsg" style="display:none;color:#f59e0b;font-size:11px;"></div>
+      `;
+      container.appendChild(formDiv);
+      
+      document.getElementById('suggestionSubmitBtn').addEventListener('click', async () => {
+        const title = document.getElementById('suggestionTitle').value.trim();
+        const content = document.getElementById('suggestionContent').value.trim();
+        if (!content) return showToast('Please enter a suggestion', 'warning');
+        const dupMsg = document.getElementById('suggestionDuplicateMsg');
+        dupMsg.style.display = 'none';
+        try {
+          const r = await fetch('/api/suggestions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.auth.token}` },
+            body: JSON.stringify({ channel: 'suggestion', title, content })
+          });
+          const data = await r.json();
+          if (data.duplicate) {
+            dupMsg.textContent = `⚠️ ${data.message}`;
+            dupMsg.style.display = 'block';
+          } else {
+            document.getElementById('suggestionTitle').value = '';
+            document.getElementById('suggestionContent').value = '';
+            showToast('Suggestion submitted!', 'success');
+            loadSuggestionChannel('suggestion');
+          }
+        } catch { showToast('Failed to submit', 'error'); }
+      });
+      
+      const searchDiv = document.createElement('div');
+      searchDiv.style.cssText = 'margin-bottom:8px;';
+      searchDiv.innerHTML = `
+        <div style="display:flex;gap:4px;">
+          <input type="text" id="suggestionSearchInput" placeholder="Search suggestions..." style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;">
+          <button id="suggestionSearchBtn" style="background:rgba(124,58,237,0.3);border:none;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">🔍</button>
+        </div>
+      `;
+      container.appendChild(searchDiv);
+      
+      document.getElementById('suggestionSearchBtn').addEventListener('click', () => {
+        const q = document.getElementById('suggestionSearchInput').value.trim();
+        loadSuggestionChannelWithSearch('suggestion', q);
+      });
+      document.getElementById('suggestionSearchInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('suggestionSearchBtn').click();
+      });
+    }
+    
+    if (items.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'text-align:center;padding:16px;color:#64748b;font-size:13px;';
+      empty.textContent = channel === 'notice' ? 'No notices yet.' : channel === 'suggestion' ? 'No suggestions yet. Be the first!' : 'No status updates yet.';
+      container.appendChild(empty);
+    } else {
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px;margin-bottom:8px;font-size:12px;';
+        
+        const authorLine = document.createElement('div');
+        authorLine.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;';
+        const canDelete = state.auth.isAdmin || (state.auth.username && state.auth.username === item.author && channel !== 'notice');
+        const canEdit = state.auth.username && (state.auth.username === item.author || state.auth.isAdmin);
+        const actionsHtml = (state.auth.isAdmin || canDelete) ? `
+          <div style="display:flex;gap:4px;">
+            ${canEdit ? `<button class="drawer-edit-btn" data-id="${item.id}" data-content="${escHtml(item.content)}" data-title="${escHtml(item.title || '')}" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:11px;padding:2px;">✏️</button>` : ''}
+            <button class="drawer-delete-btn" data-id="${item.id}" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:11px;padding:2px;">🗑️</button>
+          </div>
+        ` : '';
+        authorLine.innerHTML = `<span style="color:#64748b;font-size:11px;">👤 ${item.author || 'Unknown'}</span>
+          <span style="display:flex;align-items:center;gap:8px;color:#64748b;font-size:10px;">${new Date(item.createdAt).toLocaleDateString()}${actionsHtml}</span>`;
+        card.appendChild(authorLine);
+        
+        if (item.title) {
+          const titleEl = document.createElement('div');
+          titleEl.style.cssText = 'font-weight:600;color:#e2e8f0;margin-bottom:4px;';
+          titleEl.textContent = item.title;
+          card.appendChild(titleEl);
+        }
+        
+        const contentEl = document.createElement('div');
+        contentEl.style.cssText = 'color:#94a3b8;margin-bottom:6px;line-height:1.4;';
+        contentEl.textContent = item.content;
+        card.appendChild(contentEl);
+        
+        if (item.tags && item.tags.length > 0) {
+          const tagsDiv = document.createElement('div');
+          tagsDiv.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;';
+          item.tags.forEach(tag => {
+            const tagEl = document.createElement('span');
+        const tagColors = { 'under-review': '#f59e0b', 'accepted': '#22c55e', 'rejected': '#ef4444', 'pending': '#3b82f6', 'implementing': '#a855f7' };
+            tagEl.style.cssText = `background:${tagColors[tag] || '#64748b'}22;color:${tagColors[tag] || '#94a3b8'};padding:2px 8px;border-radius:4px;font-size:10px;border:1px solid ${tagColors[tag] || '#64748b'}44;`;
+            tagEl.textContent = tag;
+            tagsDiv.appendChild(tagEl);
+          });
+          card.appendChild(tagsDiv);
+        }
+        
+        // Admin controls
+        if (state.auth.isAdmin && channel !== 'notice') {
+          const adminDiv = document.createElement('div');
+          adminDiv.style.cssText = 'margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;';
+          ['under-review', 'accepted', 'rejected', 'pending', 'implementing'].forEach(tag => {
+            const btn = document.createElement('button');
+            btn.textContent = tag;
+            btn.style.cssText = `font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);background:${item.tags.includes(tag) ? 'rgba(124,58,237,0.3)' : 'transparent'};color:#fff;cursor:pointer;`;
+            btn.addEventListener('click', async () => {
+              await fetch(`/api/suggestions/${item.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.auth.token}` },
+                body: JSON.stringify({ tags: [tag] })
+              });
+              loadSuggestionChannel(channel);
+            });
+            adminDiv.appendChild(btn);
+          });
+          card.appendChild(adminDiv);
+        }
+        
+        container.appendChild(card);
+      });
+      
+      // Wire drawer delete buttons
+      container.querySelectorAll('.drawer-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Delete this item?')) return;
+          const id = btn.dataset.id;
+          const r = await fetch(`/api/suggestions/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${state.auth.token}` }
+          });
+          if (r.ok) { showToast('Deleted', 'success'); loadSuggestionChannel(channel); }
+          else { const err = await r.json(); showToast(err.error || 'Delete failed', 'error'); }
+        });
+      });
+      
+      // Wire drawer edit buttons
+      container.querySelectorAll('.drawer-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const card = btn.closest('div[style*="background:rgba(255,255,255,0.04)"]');
+          if (!card) return;
+          const contentEl = card.querySelector('div[style*="color:#94a3b8;margin-bottom:6px"]');
+          const titleEl = card.querySelector('div[style*="font-weight:600"]');
+          const currentContent = btn.dataset.content;
+          const currentTitle = btn.dataset.title;
+          const editDiv = document.createElement('div');
+          editDiv.innerHTML = `
+            <input type="text" id="drawerEditTitle_${btn.dataset.id}" value="${escHtml(currentTitle)}" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;margin-bottom:4px;box-sizing:border-box;" placeholder="Title (optional)">
+            <textarea id="drawerEditContent_${btn.dataset.id}" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;min-height:50px;resize:vertical;box-sizing:border-box;">${escHtml(currentContent)}</textarea>
+            <div style="display:flex;gap:6px;margin-top:4px;">
+              <button class="drawer-save-edit-btn" data-id="${btn.dataset.id}" style="font-size:11px;padding:4px 12px;background:rgba(124,58,237,0.3);border:none;color:#fff;border-radius:6px;cursor:pointer;">Save</button>
+              <button class="drawer-cancel-edit-btn" style="font-size:11px;padding:4px 12px;background:rgba(255,255,255,0.06);border:none;color:#fff;border-radius:6px;cursor:pointer;">Cancel</button>
+            </div>`;
+          if (contentEl) { contentEl.style.display = 'none'; contentEl.after(editDiv); }
+        });
+      });
+      
+      // Wire drawer save/cancel (uses event delegation)
+      container.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('drawer-save-edit-btn')) {
+          const id = e.target.dataset.id;
+          const newTitle = document.getElementById(`drawerEditTitle_${id}`)?.value?.trim() || '';
+          const newContent = document.getElementById(`drawerEditContent_${id}`)?.value?.trim();
+          if (!newContent) return showToast('Content cannot be empty', 'warning');
+          await fetch(`/api/suggestions/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.auth.token}` },
+            body: JSON.stringify({ title: newTitle, content: newContent })
+          });
+          showToast('Updated!', 'success');
+          loadSuggestionChannel(channel);
+        }
+        if (e.target.classList.contains('drawer-cancel-edit-btn')) {
+          const card = e.target.closest('div[style*="background:rgba(255,255,255,0.04)"]');
+          if (card) {
+            const contentEl = card.querySelector('div[style*="color:#94a3b8;margin-bottom:6px"]');
+            if (contentEl) contentEl.style.display = '';
+            const editDiv = e.target.closest('div[style*="margin-top"]');
+            if (editDiv) editDiv.remove();
+          }
+        }
+      });
+    }
+  } catch {
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:#ef4444;font-size:13px;">Failed to load.</div>';
+  }
+}
+
+// ==========================================================================
+// SUGGESTIONS FULL PAGE VIEW
+// ==========================================================================
+
+function loadSuggestionsView() {
+  const container = document.getElementById('suggestionsViewContent');
+  if (!container) return;
+  const channel = document.querySelector('.suggestion-global-tabs .suggestion-tab.active')?.dataset.channel || 'notice';
+  renderSuggestionFullPage(container, channel);
+  
+  document.querySelectorAll('.suggestion-global-tabs .suggestion-tab').forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll('.suggestion-global-tabs .suggestion-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderSuggestionFullPage(container, tab.dataset.channel);
+    };
+  });
+}
+
+async function renderSuggestionFullPage(container, channel) {
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:#64748b;font-size:14px;">Loading...</div>';
+  try {
+    const tagFilter = document.querySelector('.suggestion-tag-filter.active')?.dataset?.tag || '';
+    const tagFilterBar = document.getElementById('suggestionTagFilters');
+    if (tagFilterBar) tagFilterBar.style.display = channel === 'status' ? 'flex' : 'none';
+    
+    const fetchChannel = channel === 'status' ? 'suggestion' : channel;
+    const res = await fetch(`/api/suggestions?channel=${fetchChannel}`);
+    let items = await res.json();
+    if (channel === 'status' && tagFilter) {
+      items = items.filter(item => (item.tags || []).includes(tagFilter));
+    }
+    const isLoggedIn = state.auth.token && state.auth.username;
+    const isAdmin = state.auth.isAdmin;
+    
+    let html = '';
+    
+    // New suggestion form (channel=suggestion + logged in)
+    if (channel === 'notice' && isAdmin) {
+      html += `
+        <div class="suggestion-form-card">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#fff;">Post a Notice</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <input type="text" id="fullNoticeTitle" placeholder="Notice title" class="suggestion-input">
+            <textarea id="fullNoticeContent" placeholder="Write notice content..." class="suggestion-textarea" style="min-height:80px;"></textarea>
+            <button class="btn btn-primary" id="fullNoticeSubmit" style="align-self:flex-end;">Post Notice</button>
+          </div>
+        </div>`;
+    }
+    
+    if (channel === 'suggestion') {
+      if (isLoggedIn) {
+        html += `
+          <div class="suggestion-form-card">
+            <h3 style="margin:0 0 8px;font-size:15px;color:#fff;">Submit a Suggestion</h3>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <input type="text" id="fullSuggestionTitle" placeholder="Short title (optional)" class="suggestion-input">
+              <textarea id="fullSuggestionContent" placeholder="Describe your suggestion in detail..." class="suggestion-textarea" style="min-height:100px;"></textarea>
+              <div id="fullDuplicateMsg" style="display:none;color:#f59e0b;font-size:13px;"></div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button class="btn btn-secondary" id="fullSuggestClear">Clear</button>
+                <button class="btn btn-primary" id="fullSuggestionSubmit">Submit Suggestion</button>
+              </div>
+            </div>
+          </div>`;
+      } else {
+        html += `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;text-align:center;margin-bottom:16px;">
+          <p style="color:#94a3b8;margin:0 0 12px;">Sign in to submit suggestions.</p>
+          <button class="btn btn-primary" onclick="document.getElementById('authModalOverlay').style.display='flex'">Sign In</button>
+        </div>`;
+      }
+      
+      // Search
+      html += `
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <input type="text" id="fullSuggestionSearch" placeholder="Search suggestions..." class="suggestion-input" style="flex:1;">
+          <button class="btn btn-secondary" id="fullSuggestionSearchBtn">🔍 Search</button>
+        </div>`;
+    }
+    
+    if (items.length === 0) {
+      html += `<div style="text-align:center;padding:40px;color:#64748b;font-size:14px;">${
+        channel === 'notice' ? 'No notices yet.' : channel === 'suggestion' ? 'No suggestions yet. Be the first!' : 'No status updates yet.'
+      }</div>`;
+    } else {
+      items.forEach(item => {
+        const tagColors = { 'under-review': '#f59e0b', 'accepted': '#22c55e', 'rejected': '#ef4444', 'pending': '#3b82f6', 'implementing': '#a855f7' };
+        const tagsHtml = (item.tags || []).map(tag =>
+          `<span style="background:${tagColors[tag] || '#64748b'}22;color:${tagColors[tag] || '#94a3b8'};padding:2px 10px;border-radius:4px;font-size:11px;border:1px solid ${tagColors[tag] || '#64748b'}44;">${tag}</span>`
+        ).join('');
+        
+        html += `
+          <div class="suggestion-card" data-id="${item.id}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+              <div style="flex:1;">
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;flex-wrap:wrap;">
+                  <span style="color:#64748b;font-size:12px;">👤 ${item.author}</span>
+                  <span style="color:#64748b;font-size:11px;">${new Date(item.createdAt).toLocaleDateString()}</span>
+                  ${tagsHtml}
+                </div>
+                ${item.title ? `<h4 style="margin:0 0 4px;font-size:15px;color:#e2e8f0;">${escHtml(item.title)}</h4>` : ''}
+                <p style="margin:0;color:#94a3b8;font-size:14px;line-height:1.5;white-space:pre-wrap;">${escHtml(item.content)}</p>
+              </div>
+              ${isLoggedIn && (item.author === state.auth.username || isAdmin) ? `<div style="display:flex;gap:4px;flex-shrink:0;">
+                ${(item.author === state.auth.username || isAdmin) ? `<button class="edit-suggestion-btn" data-id="${item.id}" data-content="${escHtml(item.content)}" data-title="${escHtml(item.title || '')}" data-channel="${item.channel}" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:13px;padding:4px;" title="Edit">✏️</button>` : ''}
+                <button class="delete-suggestion-btn" data-id="${item.id}" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:13px;padding:4px;" title="Delete">🗑️</button>
+              </div>` : ''}
+            </div>
+            ${isAdmin && (channel === 'suggestion' || channel === 'status') ? `
+              <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
+                ${['under-review', 'accepted', 'rejected', 'pending', 'implementing'].map(tag =>
+                  `<button class="admin-tag-btn ${(item.tags || []).includes(tag) ? 'active' : ''}" data-id="${item.id}" data-tag="${tag}">${tag}</button>`
+                ).join('')}
+              </div>
+              <div style="margin-top:8px;">
+                <textarea class="admin-reply-input" data-id="${item.id}" placeholder="Admin reply..." style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;padding:8px;border-radius:6px;font-size:13px;min-height:40px;resize:vertical;">${item.adminReply ? escHtml(item.adminReply) : ''}</textarea>
+                <button class="admin-reply-btn" data-id="${item.id}" style="margin-top:4px;background:rgba(124,58,237,0.3);border:none;color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;">${item.adminReply ? 'Update Reply' : 'Reply'}</button>
+              </div>
+            ` : ''}
+            ${item.adminReply ? `<div style="margin-top:8px;background:rgba(124,58,237,0.06);border-left:2px solid var(--color-accent-primary);padding:8px 12px;border-radius:4px;font-size:13px;color:#cbd5e1;"><strong style="color:#fff;">Admin:</strong> ${escHtml(item.adminReply)}</div>` : ''}
+          </div>`;
+      });
+    }
+    
+    container.innerHTML = html;
+    
+    // Wire events
+    if (channel === 'notice' && isAdmin) {
+      document.getElementById('fullNoticeSubmit')?.addEventListener('click', async () => {
+        const title = document.getElementById('fullNoticeTitle').value.trim();
+        const content = document.getElementById('fullNoticeContent').value.trim();
+        if (!content) return showToast('Please write a notice', 'warning');
+        await submitSuggestion('notice', title, content);
+        renderSuggestionFullPage(container, channel);
+      });
+    }
+    
+    if (channel === 'suggestion') {
+      document.getElementById('fullSuggestionSubmit')?.addEventListener('click', async () => {
+        const title = document.getElementById('fullSuggestionTitle').value.trim();
+        const content = document.getElementById('fullSuggestionContent').value.trim();
+        if (!content) return showToast('Please write a suggestion', 'warning');
+        const dupMsg = document.getElementById('fullDuplicateMsg');
+        dupMsg.style.display = 'none';
+        const r = await fetch('/api/suggestions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.auth.token}` },
+          body: JSON.stringify({ channel: 'suggestion', title, content })
+        });
+        const data = await r.json();
+        if (data.duplicate) {
+          dupMsg.textContent = `⚠️ ${data.message}`;
+          dupMsg.style.display = 'block';
+        } else {
+          showToast('Suggestion submitted!', 'success');
+          renderSuggestionFullPage(container, channel);
+        }
+      });
+      document.getElementById('fullSuggestClear')?.addEventListener('click', () => {
+        document.getElementById('fullSuggestionTitle').value = '';
+        document.getElementById('fullSuggestionContent').value = '';
+      });
+      document.getElementById('fullSuggestionSearchBtn')?.addEventListener('click', async () => {
+        const q = document.getElementById('fullSuggestionSearch').value.trim();
+        if (!q) return renderSuggestionFullPage(container, channel);
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#64748b;">Searching...</div>';
+        const r = await fetch(`/api/suggestions?channel=suggestion&search=${encodeURIComponent(q)}`);
+        const results = await r.json();
+        if (results.length === 0) showToast('No matching suggestions', 'info');
+        renderSuggestionFullPage(container, channel);
+      });
+    }
+    
+    // Admin tag buttons
+    document.querySelectorAll('.admin-tag-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const tag = btn.dataset.tag;
+        await fetch(`/api/suggestions/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.auth.token}` },
+          body: JSON.stringify({ tags: [tag] })
+        });
+        renderSuggestionFullPage(container, channel);
+      });
+    });
+    
+    // Admin reply buttons
+    document.querySelectorAll('.admin-reply-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const textarea = document.querySelector(`.admin-reply-input[data-id="${id}"]`);
+        const reply = textarea?.value?.trim() || '';
+        const body = { tags: [] };
+        // Also save reply via tag update mechanism - actually we need a separate endpoint for reply
+        // For now, use the suggestions update with a reply field
+        await fetch(`/api/suggestions/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.auth.token}` },
+          body: JSON.stringify({ adminReply: reply })
+        });
+        showToast('Reply saved', 'success');
+        renderSuggestionFullPage(container, channel);
+      });
+    });
+    
+    // Edit suggestion button
+    document.querySelectorAll('.edit-suggestion-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.suggestion-card');
+        if (!card) return;
+        const contentEl = card.querySelector('p');
+        const titleEl = card.querySelector('h4');
+        const currentContent = btn.dataset.content;
+        const currentTitle = btn.dataset.title;
+        // Replace with edit form
+        const editHtml = `
+          <div style="margin-top:8px;">
+            <input type="text" id="editTitle_${btn.dataset.id}" value="${escHtml(currentTitle)}" class="suggestion-input" placeholder="Title (optional)" style="margin-bottom:6px;">
+            <textarea id="editContent_${btn.dataset.id}" class="suggestion-textarea" style="min-height:80px;">${escHtml(currentContent)}</textarea>
+            <div style="display:flex;gap:8px;margin-top:6px;">
+              <button class="btn btn-secondary save-edit-btn" data-id="${btn.dataset.id}" style="padding:6px 16px;font-size:13px;">Save</button>
+              <button class="btn btn-secondary cancel-edit-btn" style="padding:6px 16px;font-size:13px;background:rgba(255,255,255,0.06);">Cancel</button>
+            </div>
+          </div>`;
+        // Replace content area
+        const contentArea = card.querySelector('div[style*="flex:1"]');
+        if (contentArea) {
+          const oldContent = contentArea.innerHTML;
+          contentArea.dataset.oldContent = oldContent;
+          contentArea.innerHTML = editHtml;
+        }
+      });
+    });
+    
+    // Save edit
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('save-edit-btn')) {
+        const id = e.target.dataset.id;
+        const newTitle = document.getElementById(`editTitle_${id}`)?.value?.trim() || '';
+        const newContent = document.getElementById(`editContent_${id}`)?.value?.trim();
+        if (!newContent) return showToast('Content cannot be empty', 'warning');
+        await fetch(`/api/suggestions/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.auth.token}` },
+          body: JSON.stringify({ title: newTitle, content: newContent })
+        });
+        showToast('Updated!', 'success');
+        renderSuggestionFullPage(container, channel);
+      }
+      if (e.target.classList.contains('cancel-edit-btn')) {
+        const card = e.target.closest('.suggestion-card');
+        if (card) {
+          const contentArea = card.querySelector('div[style*="flex:1"]');
+          if (contentArea && contentArea.dataset.oldContent) {
+            contentArea.innerHTML = contentArea.dataset.oldContent;
+            delete contentArea.dataset.oldContent;
+          }
+        }
+      }
+    });
+    
+    // Wire delete buttons
+    document.querySelectorAll('.delete-suggestion-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this item?')) return;
+        const id = btn.dataset.id;
+        const res = await fetch(`/api/suggestions/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${state.auth.token}` }
+        });
+        if (res.ok) {
+          showToast('Deleted', 'success');
+          renderSuggestionFullPage(container, channel);
+        } else {
+          const err = await res.json();
+          showToast(err.error || 'Delete failed', 'error');
+        }
+      });
+    });
+    
+    // Wire tag filter buttons
+    document.querySelectorAll('.suggestion-tag-filter').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.suggestion-tag-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderSuggestionFullPage(container, channel);
+      };
+    });
+    
+  } catch (e) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;">Failed to load. ${e.message}</div>`;
+  }
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function submitSuggestion(channel, title, content) {
+  try {
+    await fetch('/api/suggestions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.auth.token}` },
+      body: JSON.stringify({ channel, title, content })
+    });
+  } catch { showToast('Failed to submit', 'error'); }
+}
+
+async function loadSuggestionChannelWithSearch(channel, search) {
+  const container = document.getElementById('suggestionChannelContent');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:16px;color:#64748b;font-size:13px;">Searching...</div>';
+  try {
+    const res = await fetch(`/api/suggestions?channel=${channel}&search=${encodeURIComponent(search)}`);
+    const items = await res.json();
+    const activeTab = document.querySelector('.suggestion-tab.active');
+    if (activeTab) loadSuggestionChannel(activeTab.dataset.channel);
+    if (items.length === 0) showToast('No matching suggestions found', 'info');
+  } catch { showToast('Search failed', 'error'); }
+}
+
+function updateAuthUI() {
+  const isLoggedIn = state.auth.token && state.auth.username;
+  const setBtn = (id, label, onClick) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = label;
+    el.onclick = onClick;
+  };
+  if (isLoggedIn) {
+    const displayName = state.auth.username + (state.auth.isAdmin ? ' 👑' : '');
+    setBtn('authBtn', displayName, () => {
+      if (confirm('Sign out?')) {
+        state.auth.token = null; state.auth.username = null; state.auth.isAdmin = false;
+        localStorage.removeItem('sv_token'); localStorage.removeItem('sv_username'); localStorage.removeItem('sv_isAdmin');
+        window.location.reload();
+      }
+    });
+    setBtn('drawerAuthBtn', `👤 ${displayName} (Sign Out)`, () => {
+      if (confirm('Sign out?')) {
+        state.auth.token = null; state.auth.username = null; state.auth.isAdmin = false;
+        localStorage.removeItem('sv_token'); localStorage.removeItem('sv_username'); localStorage.removeItem('sv_isAdmin');
+        window.location.reload();
+      }
+    });
+  } else {
+    setBtn('authBtn', 'Sign In', () => document.getElementById('authModalOverlay').style.display = 'flex');
+    setBtn('drawerAuthBtn', 'Sign In', () => {
+      closeDrawer();
+      document.getElementById('authModalOverlay').style.display = 'flex';
+    });
+  }
+  renderSuggestionAuth();
 }
 
 // ==========================================================================
@@ -4119,6 +4874,11 @@ function updateContinueWatching(currentTime, duration, trackingInfo) {
     return;
   }
 
+  // Keep only the latest episode per show
+  state.continueWatching = state.continueWatching.filter(
+    item => !(item.id === trackingInfo.id && item.type === trackingInfo.type && item.episodeNumber !== trackingInfo.episodeNumber)
+  );
+
   const existingIdx = state.continueWatching.findIndex(
     item => item.id === trackingInfo.id && item.episodeNumber === trackingInfo.episodeNumber
   );
@@ -4230,12 +4990,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   initCatalogModal();
 
 
+  // Drawer collapsible suggestion system
+  initSuggestionDrawer();
+
   // Filter listeners
   const bindFilter = (id, viewLoader) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', viewLoader);
   };
 
+  bindFilter('movieLanguageFilter', loadMoviesView);
+  bindFilter('tvLanguageFilter', loadTVView);
+  bindFilter('animeGenreFilter', loadAnimeView);
   bindFilter('animeSeasonFilter', loadAnimeView);
   bindFilter('animeYearFilter', loadAnimeView);
   bindFilter('animeStatusFilter', loadAnimeView);
@@ -4244,6 +5010,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindFilter('tvYearFilter', loadTVView);
   bindFilter('tvGenreFilter', loadTVView);
   bindFilter('scheduleTimezone', loadScheduleView);
+
+  document.getElementById('animeFilterApply')?.addEventListener('click', () => loadAnimeView());
+  document.getElementById('movieFilterApply')?.addEventListener('click', () => loadMoviesView());
+  document.getElementById('tvFilterApply')?.addEventListener('click', () => loadTVView());
 
   // Check VLC status
   setTimeout(checkVLCInstalled, 2000);

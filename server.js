@@ -847,15 +847,19 @@ async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20, filt
   
   let genreFilter = '';
   let yearFilter = '';
+  let seasonFilter = '';
+  let statusFilter = '';
   let isAdultFilter = !adult ? ', isAdult: false' : '';
   
   if (filters.genre) genreFilter = ', genre: $genre';
   if (filters.year) yearFilter = ', seasonYear: $year';
+  if (filters.season) seasonFilter = ', season: $season';
+  if (filters.status) statusFilter = ', status: $status';
 
   const graphqlQuery = hasSearch ? `
-    query ($search: String, $type: MediaType, $page: Int, $perPage: Int${filters.genre ? ', $genre: String' : ''}${filters.year ? ', $year: Int' : ''}) {
+    query ($search: String, $type: MediaType, $page: Int, $perPage: Int${filters.genre ? ', $genre: String' : ''}${filters.year ? ', $year: Int' : ''}${filters.season ? ', $season: MediaSeason' : ''}${filters.status ? ', $status: MediaStatus' : ''}) {
       Page(page: $page, perPage: $perPage) {
-        media(search: $search, type: $type, sort: [POPULARITY_DESC, SCORE_DESC]${genreFilter}${yearFilter}${isAdultFilter}) {
+        media(search: $search, type: $type, sort: [POPULARITY_DESC, SCORE_DESC]${genreFilter}${yearFilter}${seasonFilter}${statusFilter}${isAdultFilter}) {
           id
           title { romaji english native }
           coverImage { large medium }
@@ -876,9 +880,9 @@ async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20, filt
       }
     }
   ` : `
-    query ($type: MediaType, $page: Int, $perPage: Int${filters.genre ? ', $genre: String' : ''}${filters.year ? ', $year: Int' : ''}) {
+    query ($type: MediaType, $page: Int, $perPage: Int${filters.genre ? ', $genre: String' : ''}${filters.year ? ', $year: Int' : ''}${filters.season ? ', $season: MediaSeason' : ''}${filters.status ? ', $status: MediaStatus' : ''}) {
       Page(page: $page, perPage: $perPage) {
-        media(type: $type, sort: [POPULARITY_DESC, SCORE_DESC]${genreFilter}${yearFilter}${isAdultFilter}) {
+        media(type: $type, sort: [POPULARITY_DESC, SCORE_DESC]${genreFilter}${yearFilter}${seasonFilter}${statusFilter}${isAdultFilter}) {
           id
           title { romaji english native }
           coverImage { large medium }
@@ -903,9 +907,10 @@ async function searchAniList(query, type = 'ANIME', page = 1, perPage = 20, filt
   const variables = { type, page, perPage };
   if (hasSearch) variables.search = query;
   
-  // AniList requires specific genre casing, but usually Title Case works.
   if (filters.genre) variables.genre = filters.genre;
   if (filters.year) variables.year = parseInt(filters.year);
+  if (filters.season) variables.season = filters.season;
+  if (filters.status) variables.status = filters.status;
 
   try {
     const response = await fetch('https://graphql.anilist.co', {
@@ -1037,6 +1042,42 @@ async function searchTMDB(query, type = 'multi', page = 1) {
 }
 
 // ============= Get trending from TMDB =============
+// 18+ adult content keywords used by TMDB
+const ADULT_KEYWORDS = [356759, 325693, 197497, 9673, 190430, 30184, 156671, 234079, 280391];
+// TMDB genre IDs commonly associated with adult content when combined with adult keywords
+const ADULT_GENRE_IDS = [18, 10749, 36];
+
+// Comprehensive adult content filter for TMDB results
+function filterAdultTMDB(results, isAdult = false) {
+  if (isAdult) return results;
+  return (results || []).filter(item => {
+    // 1. TMDB adult flag
+    if (item.adult === true || item.adult === 1 || item.adult === 'true') return false;
+    // 2. AniList adult flag
+    if (item.isAdult === true) return false;
+    // 3. Genre name check
+    if (item.genres && Array.isArray(item.genres) && item.genres.some(g => {
+      if (!g) return false;
+      const name = (typeof g === 'string' ? g : (g.name || '')).toLowerCase();
+      return name === 'hentai' || name === 'adult 18+' || name === 'erotica' || name === 'pornography';
+    })) return false;
+    // 4. Genre ID 99999 sentinel
+    if (item.genre_ids && Array.isArray(item.genre_ids) && item.genre_ids.includes(99999)) return false;
+    // 5. Block Drama+Romance+History combo that's commonly adult
+    if (item.genre_ids && Array.isArray(item.genre_ids) && item.genre_ids.length >= 3) {
+      if (item.genre_ids.includes(18) && item.genre_ids.includes(10749) && item.genre_ids.includes(36)) return false;
+    }
+    // 6. Title/overview keyword check for items that slipped through
+    let titleStr = item.title || item.name || item.original_title || item.original_name || '';
+    if (typeof titleStr === 'object') titleStr = titleStr.english || titleStr.romaji || titleStr.native || '';
+    titleStr = titleStr.toLowerCase();
+    const overview = (item.overview || item.description || '').toLowerCase();
+    const adultKeywords = ['hentai', 'sex tape', 'hardcore', 'xxx', 'adult film', 'porn', 'sweet agony'];
+    if (adultKeywords.some(k => titleStr.includes(k) || overview.includes(k))) return false;
+    return true;
+  });
+}
+
 async function getTrendingTMDB(mediaType = 'movie', timeWindow = 'week') {
   if (!TMDB_API_KEY || TMDB_API_KEY === 'your_tmdb_key_here') {
     return [];
@@ -1048,7 +1089,7 @@ async function getTrendingTMDB(mediaType = 'movie', timeWindow = 'week') {
         `https://api.themoviedb.org/3/trending/${mediaType}/${timeWindow}?api_key=${TMDB_API_KEY}&language=en-US&page=${page}`
       );
       const data = await response.json();
-      return data.results || [];
+      return filterAdultTMDB(data.results || []);
     };
 
     // Fetch 3 pages to get 60 items
@@ -1072,7 +1113,7 @@ async function getUpcomingMoviesTMDB() {
         `https://api.themoviedb.org/3/movie/upcoming?api_key=${TMDB_API_KEY}&language=en-US&page=${page}`
       );
       const data = await response.json();
-      return data.results || [];
+      return filterAdultTMDB(data.results || []);
     };
     const [p1, p2, p3] = await Promise.all([fetchPage(1), fetchPage(2), fetchPage(3)]);
     return [...p1, ...p2, ...p3];
@@ -1094,12 +1135,65 @@ async function getTopRatedTMDB(mediaType = 'movie') {
         `https://api.themoviedb.org/3/${mediaType}/top_rated?api_key=${TMDB_API_KEY}&language=en-US&page=${page}`
       );
       const data = await response.json();
-      return data.results || [];
+      return filterAdultTMDB(data.results || []);
     };
     const [p1, p2, p3] = await Promise.all([fetchPage(1), fetchPage(2), fetchPage(3)]);
     return [...p1, ...p2, ...p3];
   } catch (error) {
     console.error(`TMDB top rated ${mediaType} error:`, error.message);
+    return [];
+  }
+}
+
+// ============= Get Hindi movies from TMDB =============
+async function getHindiMovies() {
+  if (!TMDB_API_KEY || TMDB_API_KEY === 'your_tmdb_key_here') return [];
+  try {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=en-US&sort_by=popularity.desc&with_original_language=hi&page=1&include_adult=false`
+    );
+    if (!res.ok) { console.error('Hindi movies HTTP error:', res.status); return []; }
+    const data = await res.json();
+    return filterAdultTMDB(data.results || []);
+  } catch (e) {
+    console.error('Hindi movies error:', e.message);
+    return [];
+  }
+}
+
+// ============= Get Hindi TV shows from TMDB =============
+async function getHindiTV() {
+  if (!TMDB_API_KEY || TMDB_API_KEY === 'your_tmdb_key_here') return [];
+  try {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_API_KEY}&language=en-US&sort_by=popularity.desc&with_original_language=hi&page=1&include_adult=false`
+    );
+    if (!res.ok) { console.error('Hindi TV HTTP error:', res.status); return []; }
+    const data = await res.json();
+    return filterAdultTMDB(data.results || []);
+  } catch (e) {
+    console.error('Hindi TV error:', e.message);
+    return [];
+  }
+}
+
+// ============= Get upcoming Hindi movies from TMDB =============
+async function getUpcomingHindiMovies() {
+  if (!TMDB_API_KEY || TMDB_API_KEY === 'your_tmdb_key_here') return [];
+  try {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const today = `${year}-${month}-${day}`;
+    const res = await fetch(
+      `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=en-US&sort_by=popularity.desc&with_original_language=hi&primary_release_date.gte=${today}&page=1&include_adult=false`
+    );
+    if (!res.ok) { console.error('Upcoming Hindi movies HTTP error:', res.status); return []; }
+    const data = await res.json();
+    return filterAdultTMDB(data.results || []);
+  } catch (e) {
+    console.error('Upcoming Hindi movies error:', e.message);
     return [];
   }
 }
@@ -1210,7 +1304,7 @@ app.get('/api/search/stream', async (req, res) => {
 
 // ============= Discover endpoint (Infinite Scroll & Filters) =============
 app.get('/api/discover', async (req, res) => {
-  const { type, page = 1, year, genre, adult } = req.query;
+  const { type, page = 1, year, genre, season, status, adult, language: lang } = req.query;
   const pageNum = parseInt(page) || 1;
   const isAdult = adult === 'true';
 
@@ -1219,6 +1313,8 @@ app.get('/api/discover', async (req, res) => {
       const filters = {};
       if (year) filters.year = year;
       if (genre) filters.genre = genre;
+      if (season) filters.season = season;
+      if (status) filters.status = status;
       const anime = await searchAniList('', 'ANIME', pageNum, 20, filters, isAdult);
       return res.json({ media: anime });
     } else if (type === 'movie' || type === 'tv') {
@@ -1230,7 +1326,9 @@ app.get('/api/discover', async (req, res) => {
       if (year) {
         url += type === 'movie' ? `&primary_release_year=${year}` : `&first_air_date_year=${year}`;
       }
-      
+      if (lang) {
+        url += `&with_original_language=${lang}`;
+      }
       if (genre) {
         if (genre === 'adult') {
           url += `&with_keywords=356759|325693`; // porn, erotica keywords
@@ -1241,7 +1339,7 @@ app.get('/api/discover', async (req, res) => {
 
       const response = await fetch(url);
       const data = await response.json();
-      return res.json({ media: data.results || [] });
+      return res.json({ media: filterAdultTMDB(data.results || [], isAdult) });
     }
     res.json({ media: [] });
   } catch (error) {
@@ -1250,13 +1348,121 @@ app.get('/api/discover', async (req, res) => {
   }
 });
 
+// ============= Suggestions System =============
+const SUGGESTIONS_FILE = pathModule.join(__dirname, 'suggestions.json');
+
+function loadSuggestions() {
+  try { return JSON.parse(fs.readFileSync(SUGGESTIONS_FILE, 'utf8')); } catch { return []; }
+}
+function saveSuggestions(s) { fs.writeFileSync(SUGGESTIONS_FILE, JSON.stringify(s, null, 2)); }
+
+// Post a suggestion / notice
+app.post('/api/suggestions', authenticateToken, (req, res) => {
+  const { channel, title, content } = req.body;
+  if (!channel || !content) return res.status(400).json({ error: 'Missing fields' });
+  if (!['notice', 'suggestion', 'status'].includes(channel))
+    return res.status(400).json({ error: 'Invalid channel' });
+
+  // Load user to check isAdmin
+  const users = loadUsers();
+  const user = users.find(u => u.username === req.user.username);
+  const isAdmin = user?.isAdmin === true;
+  
+  if (channel === 'notice' && !isAdmin)
+    return res.status(403).json({ error: 'Only admins can post notices' });
+  
+  const suggestions = loadSuggestions();
+  
+  if (channel === 'suggestion') {
+    const dup = suggestions.find(s => s.channel === 'suggestion' && s.content.toLowerCase() === content.toLowerCase());
+    if (dup) return res.json({ duplicate: true, existingId: dup.id, message: 'This suggestion has already been submitted.' });
+  }
+  
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    channel, title: title || '', content,
+    author: req.user.username,
+    tags: ['under-review'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  suggestions.unshift(entry);
+  saveSuggestions(suggestions);
+  res.json(entry);
+});
+
+app.get('/api/suggestions', (req, res) => {
+  const { channel, search } = req.query;
+  let suggestions = loadSuggestions();
+  if (channel) suggestions = suggestions.filter(s => s.channel === channel);
+  if (search) suggestions = suggestions.filter(s =>
+    (s.title || '').toLowerCase().includes(search.toLowerCase()) ||
+    s.content.toLowerCase().includes(search.toLowerCase()) ||
+    (s.author || '').toLowerCase().includes(search.toLowerCase())
+  );
+  res.json(suggestions);
+});
+
+app.put('/api/suggestions/:id', authenticateToken, (req, res) => {
+  const suggestions = loadSuggestions();
+  const idx = suggestions.findIndex(s => s.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  
+  const users = loadUsers();
+  const user = users.find(u => u.username === req.user.username);
+  const isAdmin = user?.isAdmin === true;
+  const suggestion = suggestions[idx];
+  
+  // Admin can change tags and adminReply; author can edit title/content
+  if (req.body.tags !== undefined) {
+    if (!isAdmin) return res.status(403).json({ error: 'Admin only' });
+    suggestion.tags = Array.isArray(req.body.tags) ? req.body.tags : [req.body.tags];
+  }
+  if (req.body.adminReply !== undefined) {
+    if (!isAdmin) return res.status(403).json({ error: 'Admin only' });
+    suggestion.adminReply = req.body.adminReply;
+  }
+  if (req.body.title !== undefined || req.body.content !== undefined) {
+    if (suggestion.author !== req.user.username && !isAdmin)
+      return res.status(403).json({ error: 'Not your suggestion' });
+    if (req.body.title !== undefined) suggestion.title = req.body.title;
+    if (req.body.content !== undefined) suggestion.content = req.body.content;
+  }
+  
+  suggestion.updatedAt = new Date().toISOString();
+  saveSuggestions(suggestions);
+  res.json(suggestion);
+});
+
+app.delete('/api/suggestions/:id', authenticateToken, (req, res) => {
+  const suggestions = loadSuggestions();
+  const idx = suggestions.findIndex(s => s.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  
+  const users = loadUsers();
+  const user = users.find(u => u.username === req.user.username);
+  const isAdmin = user?.isAdmin === true;
+  const suggestion = suggestions[idx];
+  
+  // Admin can delete any; author can delete own (non-notice)
+  if (suggestion.author !== req.user.username && !isAdmin)
+    return res.status(403).json({ error: 'Not authorized to delete' });
+  // Only admins can delete notices
+  if (suggestion.channel === 'notice' && !isAdmin)
+    return res.status(403).json({ error: 'Only admins can delete notices' });
+  
+  suggestions.splice(idx, 1);
+  saveSuggestions(suggestions);
+  res.json({ ok: true });
+});
+
 // ============= Unified search endpoint =============
 app.get('/api/search', async (req, res) => {
-  const { type, q, indexers, adult } = req.query;
+  const { type, q, indexers, adult, language: searchLang } = req.query;
   const isAdult = adult === 'true';
   const indexerIds = (indexers || '4').split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
 
-  if (!q || q.trim().length < 2) {
+  if (!q || q.trim().length < 1) {
     return res.json({ anime: [], media: [], torrents: [] });
   }
 
@@ -1275,10 +1481,20 @@ app.get('/api/search', async (req, res) => {
       promises.push(
         fetch(tmdbUrl).then(res => res.json()).then(data => ({
           type: 'media',
-          data: data.results || []
+          data: filterAdultTMDB(data.results || [], isAdult)
         }))
       );
     }
+  }
+
+  // TMDB fallback for anime search
+  if (type === 'all') {
+    promises.push(
+      fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&language=en-US&query=${encodeURIComponent(q)}&page=1&include_adult=false`)
+        .then(res => res.json())
+        .then(data => ({ type: 'anime_fallback', data: filterAdultTMDB((data.results || []).filter(r => (r.media_type === 'tv' || r.media_type === 'movie') && r.original_language === 'ja' && Array.isArray(r.genre_ids) && r.genre_ids.includes(16))) }))
+        .catch(() => ({ type: 'anime_fallback', data: [] }))
+    );
   }
 
   // Scraper promise timeout wrapper to ensure slow/hung scrapers never block other results
@@ -1382,16 +1598,24 @@ app.get('/api/trending', async (req, res) => {
       upcomingMovies,
       topRatedMovies,
       topRatedTV,
-      upcomingAnimeList
+      upcomingAnimeList,
+      airingAnimeList,
+      hindiMovies,
+      hindiTV,
+      upcomingHindiMovies
     ] = await Promise.all([
       searchAniList('', 'ANIME', 1, 50, {}, isAdult),
-      getTrendingTMDB('movie', 'week'), // trending doesn't support include_adult natively easily without discover, so we filter it? Actually, TMDB trending doesn't include porn.
+      getTrendingTMDB('movie', 'week'),
       getTrendingTMDB('tv', 'week'),
       searchIndexer(4, '', '').catch(() => []),
       getUpcomingMoviesTMDB(),
       getTopRatedTMDB('movie'),
       getTopRatedTMDB('tv'),
-      getUpcomingAnime(isAdult)
+      getUpcomingAnime(isAdult),
+      searchAniList('', 'ANIME', 1, 20, { status: 'RELEASING' }, isAdult),
+      getHindiMovies(),
+      getHindiTV(),
+      getUpcomingHindiMovies()
     ]);
 
     // Build featured slideshow items
@@ -1450,6 +1674,10 @@ app.get('/api/trending', async (req, res) => {
       topRatedMovies: topRatedMovies,
       topRatedTV: topRatedTV,
       upcomingAnime: upcomingAnimeList,
+      airingAnime: airingAnimeList,
+      hindiMovies: hindiMovies,
+      hindiTV: hindiTV,
+      upcomingHindiMovies: upcomingHindiMovies,
       featured
     });
   } catch (error) {
@@ -1634,12 +1862,13 @@ app.post('/api/auth/signup', (req, res) => {
   if (users.find(u => u.username === username)) return res.status(400).json({ error: 'Username taken' });
   
   const hashedPassword = bcrypt.hashSync(password, 8);
-  const newUser = { username, password: hashedPassword, catalog: [], continueWatching: [] };
+  const isAdminUser = username.toLowerCase() === 'dargotamber';
+  const newUser = { username, password: hashedPassword, catalog: [], continueWatching: [], isAdmin: isAdminUser };
   users.push(newUser);
   saveUsers(users);
 
   const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user: { username } });
+  res.json({ token, user: { username, isAdmin: isAdminUser } });
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -1652,11 +1881,13 @@ app.post('/api/auth/login', (req, res) => {
   if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
 
   const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user: { username } });
+  res.json({ token, user: { username, isAdmin: user.isAdmin === true } });
 });
 
 app.get('/api/auth/me', authenticateToken, (req, res) => {
-  res.json({ user: { username: req.user.username } });
+  const users = loadUsers();
+  const user = users.find(u => u.username === req.user.username);
+  res.json({ user: { username: req.user.username, isAdmin: user?.isAdmin === true } });
 });
 
 // ============= User Data Endpoints =============

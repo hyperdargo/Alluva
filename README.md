@@ -4,19 +4,19 @@
 <div align="center">
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.5-success.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-1.0.6-success.svg)](package.json)
 [![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)](#)
 
 ```
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ███████╗████████╗██████╗ ███████╗ █████╗ ███╗   ███╗        ║
-║   ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██╔══██╗████╗ ████║        ║
-║   ███████╗   ██║   ██████╔╝█████╗  ███████║██╔████╔██║        ║
-║   ╚════██║   ██║   ██╔══██╗██╔══╝  ██╔══██║██║╚██╔╝██║        ║
-║   ███████║   ██║   ██║  ██║███████╗██║  ██║██║ ╚═╝ ██║        ║
-║   ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝        ║
+║   ███████╗████████╗██████╗ ███████╗ █████╗ ███╗   ███╗      ║
+║   ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██╔══██╗████╗ ████║      ║
+║   ███████╗   ██║   ██████╔╝█████╗  ███████║██╔████╔██║      ║
+║   ╚════██║   ██║   ██╔══██╗██╔══╝  ██╔══██║██║╚██╔╝██║      ║
+║   ███████║   ██║   ██║  ██║███████╗██║  ██║██║ ╚═╝ ██║      ║
+║   ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝      ║
 ║                                                               ║
 ║             🚀 Self-Hosted Personal Media Hub 🚀             ║
 ║                                                               ║
@@ -27,32 +27,56 @@
 
 ---
 
-## ✨ What's New in v1.0.5?
+## ✨ What's New in v1.0.6?
 
-v1.0.5 is a milestone release that brings together the best of everything we've built since v1.0.0 — from Prowlarr integration and direct scrapers all the way to a polished, production-ready user experience. Here's what makes it different:
+v1.0.6 delivers a major stability and content-filtering overhaul, along with full anime segregation and a redesigned suggestion system.
 
-### 🔄 Smarter Streaming
+### 🎬 Anime Separation
 
-- **Dual Streaming Engine**: Torrent streaming is now the secondary option. Direct Play is the new default — faster loads, fewer dependencies, and instant playback. Torrent streams remain available as a fallback for content not available via direct servers.
-- **Direct Download in Torrent Streams**: Every torrent result now includes a direct download button, making it easy to save media locally while streaming.
-- **Infinite Scrolling**: Replaced the static "Load More" buttons with a seamless infinite scroll mechanism across the Anime, Movies, and TV Shows grids, dynamically fetching the next page as you browse.
-- **Continue Watching Auto-Play**: Resume from where you left off — saves playback position and auto-restores it on return.
+- **Japanese animation is fully segregated** from Movies and TV Shows — anime only appears in the Anime section.
+- Applied to all home page sections, discover endpoints, and search results.
+- TMDB Japanese animation fallback merged into search results for better anime discovery.
 
-### 🎨 Redesigned UI
+### 🛡️ Robust 18+ Content Filtering
 
-- **Login Page**: Added a dedicated authentication page with session management for a more secure, personalized experience.
-- **Responsive Redesign**: Fully adaptive layout across desktop, tablet, and mobile devices with a redesigned navigation sidebar, improved detail views, and better touch support.
-- **Seasons & Series Browser**: TV shows now display all other seasons below the info card as poster cards. Anime shows related anime (sequels/prequels). Movies show collection parts — no more digging to find the next episode or related title.
-- **Detail View Overhaul**: Redesigned theater layout with a 3-column grid, episode grids with watched-dot progress indicators, and embedded recommendations sidebar.
-- **Recommendations Sidebar**: Shows genre-matched recommendations for every title, with a poster-card layout for easy browsing.
+- **Multi-signal adult content detection** on both server and client:
+  - TMDB `adult` flag, AniList `isAdult` flag
+  - Genre name detection (hentai, adult 18+, erotica, pornography)
+  - Genre ID 99999 sentinel blocking
+  - Drama + Romance + History genre combination detection
+  - Title and overview keyword scanning
+- Applied to every TMDB endpoint: trending, upcoming, top-rated, discover, search, Hindi content.
 
-### 🔒 Safety & Performance
+### 📋 Suggestion System
 
-- **18+ Content Safe Search**: Added a global setting to enable/disable 18+ content across TMDB and AniList searches, defaulting to Safe Search (Off).
-- **Hentai Genre Filter**: Introduced a hidden Hentai genre filter in the Anime view that dynamically appears only when 18+ content is enabled.
-- **Optimized Dashboard Performance**: Capped the featured lists (Trending, Top Rated, Upcoming) on the Home view to 16 items each, significantly improving initial load times and overall UI responsiveness.
-- **Robust API Error Handling**: Fixed a critical bug in the search backend where missing TMDB results or missing AniList image/title data would crash the application or UI.
-- **Built-in Ad Block**: Added a global setting that blocks popup ads from Direct Play embed servers using the iframe `sandbox` attribute — no extension needed.
+- **Full-page suggestions view** with three channels: Notice, Suggestion, Status.
+- **Tag-based workflow**: under-review → implemented → rejected.
+- **Tag filter pills** in the Status tab (All, Under Review, Implemented, Rejected).
+- **Admin controls**: set tags, reply to suggestions, manage workflow.
+- **Auto-admin** assigned to user `DargoTamber` on signup.
+- **Edit own suggestions** with inline editing.
+- **Duplicate detection** with warning message.
+
+### 🎨 Hero Banner & Navigation
+
+- **Arrow navigation** buttons on hero banner (left/right) with fade-in on hover.
+- **Swipe gesture support** for mobile.
+- VLC/torrent streaming guide moved to drawer collapsible section.
+
+### 🌐 Language Filter
+
+- **16-language filter** for Movies and TV Shows views, sent to TMDB as `&with_original_language=`.
+- Bollywood "View All" auto-sets language to Hindi.
+
+### 🔧 Bug Fixes & Performance
+
+- Fixed `filterAdult()` crash on AniList items with object titles (`TypeError: toLowerCase is not a function`).
+- Fixed `sortByDate()` mutating original data arrays (uses `.slice().sort()` now).
+- Fixed filter pills showing wrong sort order (trending/top no longer sorted by release date).
+- Fixed home feed failing to fetch — each section isolated in its own try/catch.
+- Fixed server crash when TMDB API key is not configured.
+- Fixed auto-admin not working with case variations.
+- Responsive 3-row grid system based on screen width.
 
 ---
 
@@ -294,7 +318,7 @@ If you find Stream Vault helpful, please:
 
 ### Made with ❤️ for the Media Streaming Community
 
-**© copyright by DTEmpire (DargoTamber) | version 1.0.5 (latest)**
+**© copyright by DTEmpire (DargoTamber) | version 1.0.6**
 
 ```text
 █████████████████████████████████████████████

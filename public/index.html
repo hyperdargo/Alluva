@@ -92,14 +92,56 @@
         <a href="#/tv" class="drawer-link" data-view="tv">TV Shows</a>
         <a href="#/catalog" class="drawer-link" data-view="catalog">My List</a>
         <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0;">
-        <div style="padding: 8px 16px;">
-          <label style="font-size: 12px; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Torrent Indexer</label>
+
+        <!-- VLC / Torrent Stream Guide -->
+        <div class="drawer-collapsible">
+          <button class="drawer-collapse-btn" data-target="vlcGuideContent">
+            <span>🎬 VLC & Torrent Guide</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="collapse-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          <div class="drawer-collapse-content" id="vlcGuideContent">
+            <div class="drawer-guide-section">
+              <p style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.5; margin: 0 0 8px;">
+                Some videos may fail or stutter in the web browser. Use VLC for the best playback experience.
+              </p>
+              <a href="https://filemanager.ankitgupta.com.np/files/Extention/" target="_blank" class="drawer-guide-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Download Extension
+              </a>
+              <div style="margin: 8px 0; background: rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; color: #94a3b8; font-family: monospace;">
+                ID: <span style="color: #4ade80;">demo</span> | Pass: <span style="color: #4ade80;">demodemodemo</span>
+              </div>
+              <p style="color: #64748b; font-size: 0.78rem; margin: 0; font-style: italic;">
+                Videos stream directly over the internet. Not downloaded to your PC. Buffering may occur.
+              </p>
+            </div>
+            <div class="drawer-guide-section">
+              <h4 style="color: #fff; font-size: 0.85rem; margin: 0 0 6px;">How Torrent Streaming Works</h4>
+              <p style="color: #94a3b8; font-size: 0.8rem; line-height: 1.5; margin: 0;">
+                This app uses <strong style="color:#fff;">TorrServer</strong> or <strong style="color:#fff;">WebTorrent</strong> to stream torrents directly without downloading.
+                When you click play, the torrent is fetched from indexers, streamed in chunks, and played in your chosen player (VLC/MPV/browser).
+                The VLC extension routes streams to your local VLC for smooth playback of any format.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <a href="#/suggestions" class="drawer-link" data-view="suggestions" style="color:var(--color-text-secondary);">💬 Suggestions</a>
+
+        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0;">
+        <a href="#/settings" class="drawer-link" data-view="settings">⚙ Settings</a>
+
+        <!-- Spacer to push bottom items down -->
+        <div style="flex:1;min-height:16px;"></div>
+
+        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 4px 0;">
+        <div style="padding: 6px 16px;">
+          <label style="font-size: 11px; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Torrent Indexer</label>
           <select class="drawer-indexer-select" id="drawerIndexerSelect" style="width:100%; background:rgba(255,255,255,0.06); color:#fff; border:1px solid rgba(255,255,255,0.1); padding:8px; border-radius:4px; font-size:13px;">
             <option value="all">All Indexers</option>
           </select>
         </div>
-        <a href="#/settings" class="drawer-link" data-view="settings">⚙ Settings</a>
-        <a href="javascript:void(0)" class="drawer-link" id="drawerAuthBtn" style="color: #3b82f6;">Sign In</a>
+        <a href="javascript:void(0)" class="drawer-link" id="drawerAuthBtn" style="color: #3b82f6;font-size:13px;">Sign In</a>
       </nav>
     </aside>
 
@@ -115,40 +157,7 @@
             <!-- Populated dynamically by app.js -->
           </div>
 
-          <div class="extension-notice-banner"
-            style="background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.15); border-radius: 12px; padding: 20px; margin: 24px 32px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 1.4rem;">🎬</span>
-              <h3 style="margin: 0; color: #fff; font-size: 1.15rem;">For the Best Experience, Use VLC!</h3>
-            </div>
 
-            <p style="margin: 0; color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">
-              Some videos may fail or stutter in the web browser. We highly recommend installing our extension to play
-              videos directly in VLC Media Player (which plays everything flawlessly!).
-            </p>
-
-            <div
-              style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border: 1px solid rgba(255,255,255,0.05);">
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <span style="color:#94a3b8;font-size:0.9rem;">Download the extension and follow the video guide here:</span>
-                <a href="https://filemanager.ankitgupta.com.np/files/Extention/" target="_blank"
-                  style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#7c3aed,#3b82f6);color:#fff;text-decoration:none;font-weight:600;font-size:0.9rem;padding:10px 20px;border-radius:8px;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                  Click Here
-                </a>
-              </div>
-              <div
-                style="background: rgba(255,255,255,0.08); padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; color: #fff; font-family: monospace; border: 1px solid rgba(255,255,255,0.1);">
-                ID: <span style="color: #4ade80;">demo</span> <span style="opacity:0.5; margin: 0 8px;">|</span> Pass:
-                <span style="color: #4ade80;">demodemodemo</span>
-              </div>
-            </div>
-
-            <p style="margin: 0; color: #64748b; font-size: 0.85rem; font-style: italic;">
-              Note: Videos stream directly over the internet. They are not downloaded to your PC, so it may take a few
-              seconds to buffer before playing.
-            </p>
-          </div>
 
           <!-- Continue Watching -->
           <section class="content-section" id="continueWatchingSection" style="display: none;">
@@ -165,67 +174,58 @@
             <div class="content-grid" id="myListGrid"></div>
           </section>
 
-          <!-- Trending Anime -->
-          <section class="content-section">
+          <!-- Anime Section -->
+          <section class="content-section" id="sectionAnime">
             <div class="section-header">
-              <h2 class="section-title">Trending Anime</h2>
+              <h2 class="section-title">Anime</h2>
+              <div class="section-filter-pills" id="filterAnime">
+                <button class="filter-pill active" data-type="airing">Airing</button>
+                <button class="filter-pill" data-type="trending">Trending</button>
+                <button class="filter-pill" data-type="upcoming">Upcoming</button>
+              </div>
               <a href="#/anime" class="section-link" data-view="anime">View All</a>
             </div>
-            <div class="content-grid" id="trendingAnimeGrid"></div>
+            <div class="content-grid" id="sectionAnimeGrid"></div>
           </section>
 
-          <!-- Popular Movies -->
-          <section class="content-section">
+          <!-- Bollywood Movies Section -->
+          <section class="content-section" id="sectionBollyMovies">
             <div class="section-header">
-              <h2 class="section-title">Popular Movies</h2>
+              <h2 class="section-title">Bollywood Movies</h2>
+              <div class="section-filter-pills" id="filterBollyMovies">
+                <button class="filter-pill active" data-type="latest">Latest</button>
+                <button class="filter-pill" data-type="upcoming">Upcoming</button>
+              </div>
               <a href="#/movies" class="section-link" data-view="movies">View All</a>
             </div>
-            <div class="content-grid" id="popularMoviesGrid"></div>
+            <div class="content-grid" id="sectionBollyMoviesGrid"></div>
           </section>
 
-          <!-- Trending TV Shows -->
-          <section class="content-section">
+          <!-- Hollywood Movies Section -->
+          <section class="content-section" id="sectionHollyMovies">
             <div class="section-header">
-              <h2 class="section-title">Trending TV Shows</h2>
+              <h2 class="section-title">Hollywood Movies</h2>
+              <div class="section-filter-pills" id="filterHollyMovies">
+                <button class="filter-pill active" data-type="trending">Trending</button>
+                <button class="filter-pill" data-type="top">Top Rated</button>
+                <button class="filter-pill" data-type="upcoming">Upcoming</button>
+              </div>
+              <a href="#/movies" class="section-link" data-view="movies">View All</a>
+            </div>
+            <div class="content-grid" id="sectionHollyMoviesGrid"></div>
+          </section>
+
+          <!-- TV Shows Section -->
+          <section class="content-section" id="sectionHollyTV">
+            <div class="section-header">
+              <h2 class="section-title">TV Shows</h2>
+              <div class="section-filter-pills" id="filterHollyTV">
+                <button class="filter-pill active" data-type="trending">Trending</button>
+                <button class="filter-pill" data-type="top">Top Rated</button>
+              </div>
               <a href="#/tv" class="section-link" data-view="tv">View All</a>
             </div>
-            <div class="content-grid" id="trendingTVGrid"></div>
-          </section>
-
-          <!-- Upcoming Movies -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Upcoming Movies</h2>
-              <a href="#/movies" class="section-link" data-view="movies">View All</a>
-            </div>
-            <div class="content-grid" id="upcomingMoviesGrid"></div>
-          </section>
-
-          <!-- Top Rated Movies -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Top Rated Movies</h2>
-              <a href="#/movies" class="section-link" data-view="movies">View All</a>
-            </div>
-            <div class="content-grid" id="topRatedMoviesGrid"></div>
-          </section>
-
-          <!-- Top Rated TV Shows -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Top Rated TV Shows</h2>
-              <a href="#/tv" class="section-link" data-view="tv">View All</a>
-            </div>
-            <div class="content-grid" id="topRatedTVGrid"></div>
-          </section>
-
-          <!-- Upcoming Anime -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Upcoming Anime</h2>
-              <a href="#/anime" class="section-link" data-view="anime">View All</a>
-            </div>
-            <div class="content-grid" id="upcomingAnimeGrid"></div>
+            <div class="content-grid" id="sectionHollyTVGrid"></div>
           </section>
 
           <!-- Recent Torrents -->
@@ -271,6 +271,7 @@
                 <option value="FINISHED">Finished</option>
                 <option value="NOT_YET_RELEASED">Upcoming</option>
               </select>
+              <button class="btn btn-primary" id="animeFilterApply" style="padding:6px 16px;font-size:13px;height:34px;">Search</button>
             </div>
           </div>
           <div class="content-grid" id="animeGrid"></div>
@@ -288,6 +289,26 @@
                 <option value="">All Genres</option>
                 <option value="adult" class="adult-genre" style="display:none;">Adult (18+)</option>
               </select>
+              <select class="filter-select" id="movieLanguageFilter">
+                <option value="">All Languages</option>
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="ko">Korean</option>
+                <option value="ja">Japanese</option>
+                <option value="zh">Chinese</option>
+                <option value="ta">Tamil</option>
+                <option value="te">Telugu</option>
+                <option value="ml">Malayalam</option>
+                <option value="kn">Kannada</option>
+                <option value="bn">Bengali</option>
+                <option value="mr">Marathi</option>
+                <option value="th">Thai</option>
+                <option value="fr">French</option>
+                <option value="es">Spanish</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+              </select>
+              <button class="btn btn-primary" id="movieFilterApply" style="padding:6px 16px;font-size:13px;height:34px;">Search</button>
             </div>
           </div>
           <div class="content-grid" id="moviesGrid"></div>
@@ -305,6 +326,26 @@
                 <option value="">All Genres</option>
                 <option value="adult" class="adult-genre" style="display:none;">Adult (18+)</option>
               </select>
+              <select class="filter-select" id="tvLanguageFilter">
+                <option value="">All Languages</option>
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="ko">Korean</option>
+                <option value="ja">Japanese</option>
+                <option value="zh">Chinese</option>
+                <option value="ta">Tamil</option>
+                <option value="te">Telugu</option>
+                <option value="ml">Malayalam</option>
+                <option value="kn">Kannada</option>
+                <option value="bn">Bengali</option>
+                <option value="mr">Marathi</option>
+                <option value="th">Thai</option>
+                <option value="fr">French</option>
+                <option value="es">Spanish</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+              </select>
+              <button class="btn btn-primary" id="tvFilterApply" style="padding:6px 16px;font-size:13px;height:34px;">Search</button>
             </div>
           </div>
           <div class="content-grid" id="tvGrid"></div>
@@ -358,6 +399,27 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <!-- Suggestions View -->
+        <section class="view" id="suggestionsView">
+          <div class="view-header" style="justify-content:space-between;align-items:center;">
+            <h1 class="view-title">💬 Suggestions</h1>
+            <div class="suggestion-global-tabs">
+              <button class="suggestion-tab active" data-channel="notice">📢 Notice</button>
+              <button class="suggestion-tab" data-channel="suggestion">💡 Suggestion</button>
+              <button class="suggestion-tab" data-channel="status">📋 Status</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;" id="suggestionTagFilters">
+            <button class="suggestion-tag-filter active" data-tag="">All</button>
+            <button class="suggestion-tag-filter" data-tag="under-review">Under Review</button>
+            <button class="suggestion-tag-filter" data-tag="accepted">Accepted</button>
+            <button class="suggestion-tag-filter" data-tag="rejected">Rejected</button>
+            <button class="suggestion-tag-filter" data-tag="pending">Pending</button>
+            <button class="suggestion-tag-filter" data-tag="implementing">Implementing</button>
+          </div>
+          <div id="suggestionsViewContent" style="margin-top:8px;"></div>
         </section>
 
         <!-- Settings View -->
@@ -497,7 +559,7 @@
             <div class="settings-section">
               <h2 class="settings-title">About</h2>
               <div class="about-info">
-                <p>Stream Vault v1.0.5</p>
+                <p>Stream Vault v1.0.6</p>
                 <p>A self-hosted personal media hub inspired by Jellyfin</p>
                 <p>Built with Express.js, AniList, TMDB, and Torznab indexers</p>
               </div>
@@ -618,14 +680,14 @@
       </div>
 
       <footer class="app-footer">
-        <p>&copy; copyright by DTEmpire (DargoTamber) | version 1.0.5</p>
+        <p>&copy; copyright by DTEmpire (DargoTamber) | version 1.0.6</p>
       </footer>
     </main>
   </div>
 
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <script src="https://content.jwplatform.com/libraries/KB5zFt7A.js"></script>
-  <script src="app.js?v=27"></script>
+  <script src="app.js?v=28"></script>
   <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
 </body>
 
