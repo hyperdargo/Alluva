@@ -1075,19 +1075,17 @@ async function loadHomeView() {
   renderMyList();
 
   const grids = {
-    anime: document.getElementById('sectionAnimeGrid'),
-    bollyMovies: document.getElementById('sectionBollyMoviesGrid'),
     hollyMovies: document.getElementById('sectionHollyMoviesGrid'),
-    hollyTV: document.getElementById('sectionHollyTVGrid'),
-    torrents: document.getElementById('recentTorrentsGrid')
+    bollyMovies: document.getElementById('sectionBollyMoviesGrid'),
+    anime: document.getElementById('sectionAnimeGrid'),
+    hollyTV: document.getElementById('sectionHollyTVGrid')
   };
 
   const fillSkeletons = (el, count = 16) => {
     if (el) el.innerHTML = Array(count).fill('<div class="media-card poster-card skeleton"></div>').join('');
   };
 
-  Object.values(grids).forEach(g => { if (g && g !== grids.torrents) fillSkeletons(g); });
-  if (grids.torrents) fillSkeletons(grids.torrents, 8);
+  Object.values(grids).forEach(g => { if (g) fillSkeletons(g); });
 
   try {
     const res = await fetch('/api/trending');
@@ -1129,64 +1127,27 @@ async function loadHomeView() {
 
     const noAnime = (items) => (items || []).filter(item => !(item.original_language === 'ja' && Array.isArray(item.genre_ids) && item.genre_ids.includes(16)));
 
-    safe(() => populateGrid(grids.anime, sortByDate(filterAdult(data.airingAnime)), 'anime', 'No anime found'));
-    safe(() => populateGrid(grids.bollyMovies, sortByDate(filterAdult(data.hindiMovies)), 'movie', 'No Bollywood movies found'));
     safe(() => populateGrid(grids.hollyMovies, dedup(noAnime(filterAdult(data.movies))), 'movie', 'No movies found'));
+    safe(() => populateGrid(grids.bollyMovies, sortByDate(filterAdult(data.hindiMovies)), 'movie', 'No Bollywood movies found'));
+    safe(() => populateGrid(grids.anime, sortByDate(filterAdult(data.airingAnime)), 'anime', 'No anime found'));
     safe(() => populateGrid(grids.hollyTV, dedup(noAnime(filterAdult(data.tv))), 'tv', 'No TV shows found'));
-
-    safe(() => {
-      if (grids.torrents) {
-        grids.torrents.innerHTML = '';
-        if (data.torrents && data.torrents.length > 0) {
-          data.torrents.slice(0, gridRows).forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'torrent-item';
-            const q = parseQuality(item.title);
-            const e = parseExtension(item.title);
-            card.innerHTML = `
-              <div class="torrent-info">
-                <h4 class="torrent-title" title="${item.title}">${item.title}</h4>
-                <div class="torrent-meta">
-                  <span class="torrent-quality">${q}</span>${e ? `<span class="torrent-quality">${e}</span>` : ''}
-                  <span class="torrent-size">${formatBytes(item.size)}</span>
-                  <span class="torrent-seeders">⬆ ${item.seeders}</span>
-                  <span>${item.source}</span>
-                </div>
-              </div>
-              <div class="torrent-actions">
-                <button class="torrent-btn play-btn" title="Play">▶</button>
-                <button class="torrent-btn vlc-btn" title="VLC">🎬</button>
-                <button class="torrent-btn mpv-btn" title="MPV">📺</button>
-                <button class="torrent-btn magnet-btn" title="Magnet">📋</button>
-              </div>`;
-            card.querySelector('.play-btn').addEventListener('click', () => playTorrent(item.title, item.magnet, { title: item.title, poster: '' }));
-            card.querySelector('.vlc-btn').addEventListener('click', () => resolveTorrentAndPlay(item.magnet, 'vlc', item.title));
-            card.querySelector('.mpv-btn').addEventListener('click', () => resolveTorrentAndPlay(item.magnet, 'mpv', item.title));
-            card.querySelector('.magnet-btn').addEventListener('click', () => { navigator.clipboard.writeText(item.magnet); showToast('Copied!', 'success'); });
-            grids.torrents.appendChild(card);
-          });
-        } else {
-          grids.torrents.innerHTML = '<div class="empty-state"><p>No recent torrents found.</p></div>';
-        }
-      }
-    });
 
     // Wire per-section filter pills
     safe(() => {
       const sectionConfig = {
-        filterAnime: {
-          trending: { items: data.anime, type: 'anime', grid: 'sectionAnimeGrid' },
-          airing: { items: data.airingAnime, type: 'anime', grid: 'sectionAnimeGrid' },
-          upcoming: { items: data.upcomingAnime, type: 'anime', grid: 'sectionAnimeGrid' }
+        filterHollyMovies: {
+          trending: { items: data.movies, type: 'movie', grid: 'sectionHollyMoviesGrid' },
+          top: { items: data.topRatedMovies, type: 'movie', grid: 'sectionHollyMoviesGrid' },
+          upcoming: { items: data.upcomingMovies, type: 'movie', grid: 'sectionHollyMoviesGrid' }
         },
         filterBollyMovies: {
           latest: { items: data.hindiMovies, type: 'movie', grid: 'sectionBollyMoviesGrid' },
           upcoming: { items: data.upcomingHindiMovies, type: 'movie', grid: 'sectionBollyMoviesGrid' }
         },
-        filterHollyMovies: {
-          trending: { items: data.movies, type: 'movie', grid: 'sectionHollyMoviesGrid' },
-          top: { items: data.topRatedMovies, type: 'movie', grid: 'sectionHollyMoviesGrid' },
-          upcoming: { items: data.upcomingMovies, type: 'movie', grid: 'sectionHollyMoviesGrid' }
+        filterAnime: {
+          trending: { items: data.anime, type: 'anime', grid: 'sectionAnimeGrid' },
+          airing: { items: data.airingAnime, type: 'anime', grid: 'sectionAnimeGrid' },
+          upcoming: { items: data.upcomingAnime, type: 'anime', grid: 'sectionAnimeGrid' }
         },
         filterHollyTV: {
           trending: { items: data.tv, type: 'tv', grid: 'sectionHollyTVGrid' },
