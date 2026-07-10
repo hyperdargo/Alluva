@@ -204,3 +204,18 @@
 [2026-07-06T05:29:48.834Z] Stream Vault Native Messaging Host stream ended
 [2026-07-06T05:29:48.832Z] Stream Vault Native Messaging Host stream ended
 [2026-07-06T05:51:27.441Z] Stream Vault Native Messaging Host stream ended
+[2026-07-06T09:59:38.531Z] Stream Vault Native Messaging Host started
+[2026-07-06T09:59:38.549Z] Received message: {"action":"save_and_play","content":"#EXTM3U\n#EXTINF:-1,Obsession.2026.1080p.AMZN.WEB-DL.DDP5.1.H264.MP4-BTM\nhttps://torrserver.ankitgupta.com.np/stream?link=afa1047f19870e4a75a8603037fd0fb11bdfdce0&index=1&play\n","folder":"C:\\StreamVault_Downloads","filename":"Obsession20261080pAMZNWEB-DLDDP51H264MP4-BTM_afa1047f19870e4a75a8603037fd0fb11bdfdce0.m3u8"}
+[2026-07-06T09:59:38.551Z] Successfully saved playlist file to: C:\StreamVault_Downloads\Obsession20261080pAMZNWEB-DLDDP51H264MP4-BTM_afa1047f19870e4a75a8603037fd0fb11bdfdce0.m3u8
+[2026-07-06T09:59:38.552Z] Spawning VLC path: "C:\Program Files\VideoLAN\VLC\vlc.exe" with file: "C:\StreamVault_Downloads\Obsession20261080pAMZNWEB-DLDDP51H264MP4-BTM_afa1047f19870e4a75a8603037fd0fb11bdfdce0.m3u8"
+[2026-07-06T10:01:14.850Z] Stream Vault Native Messaging Host stream ended
+[2026-07-06T10:20:31.568Z] Stream Vault Native Messaging Host started
+[2026-07-06T10:20:31.571Z] Received message: {"action":"save_and_play","content":"#EXTM3U\n#EXTINF:-1,Michael.2026.1080p.AMZN.WEB-DL.DDP5.1.H.264-KyoGo\nhttps://torrserver.ankitgupta.com.np/stream?link=5ef77d36a19a45439f918ec23a26ce3fd3c0182c&index=1&play\n","folder":"C:\\StreamVault_Downloads","filename":"Michael20261080pAMZNWEB-DLDDP51H264-KyoGo_5ef77d36a19a45439f918ec23a26ce3fd3c0182c.m3u8"}
+[2026-07-06T10:20:31.572Z] Successfully saved playlist file to: C:\StreamVault_Downloads\Michael20261080pAMZNWEB-DLDDP51H264-KyoGo_5ef77d36a19a45439f918ec23a26ce3fd3c0182c.m3u8
+[2026-07-06T10:20:31.573Z] Spawning VLC path: "C:\Program Files\VideoLAN\VLC\vlc.exe" with file: "C:\StreamVault_Downloads\Michael20261080pAMZNWEB-DLDDP51H264-KyoGo_5ef77d36a19a45439f918ec23a26ce3fd3c0182c.m3u8"
+[2026-07-06T10:20:37.465Z] Stream Vault Native Messaging Host stream ended
+[2026-07-06T10:45:10.254Z] Stream Vault Native Messaging Host started
+[2026-07-06T10:45:10.621Z] Received message: {"action":"save_and_play","content":"#EXTM3U\n#EXTINF:-1,Michael.2026.1080p.AMZN.WEB-DL.DDP5.1.H.264-KyoGo\nhttps://torrserver.ankitgupta.com.np/stream?link=5ef77d36a19a45439f918ec23a26ce3fd3c0182c&index=1&play\n","folder":"C:\\StreamVault_Downloads","filename":"Michael20261080pAMZNWEB-DLDDP51H264-KyoGo_5ef77d36a19a45439f918ec23a26ce3fd3c0182c.m3u8"}
+[2026-07-06T10:45:10.622Z] Successfully saved playlist file to: C:\StreamVault_Downloads\Michael20261080pAMZNWEB-DLDDP51H264-KyoGo_5ef77d36a19a45439f918ec23a26ce3fd3c0182c.m3u8
+[2026-07-06T10:45:10.622Z] Spawning VLC path: "C:\Program Files\VideoLAN\VLC\vlc.exe" with file: "C:\StreamVault_Downloads\Michael20261080pAMZNWEB-DLDDP51H264-KyoGo_5ef77d36a19a45439f918ec23a26ce3fd3c0182c.m3u8"
+[2026-07-06T10:46:02.511Z] Stream Vault Native Messaging Host stream ended
