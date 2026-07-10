@@ -6,3 +6,6 @@ services:
       - "3000:3000"
     env_file: .env
     restart: unless-stopped
+    volumes:
+      - ./users.json:/app/users.json
+      - ./suggestions.json:/app/suggestions.json
