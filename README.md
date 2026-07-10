@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/favicon.svg" alt="Alluva Logo" width="80" height="80">
+  <img src="https://media.discordapp.net/attachments/1052887260485394453/1525103515343519774/android-chrome-192x192.png?ex=6a522ad5&is=6a50d955&hm=74f555c0511499ef559358939391ec1ac3e9f6e8ac1236307e21eb19a320ce19&=&format=webp&quality=lossless" alt="Alluva Logo" width="80" height="80">
   <h1 align="center">Alluva</h1>
   <p align="center">All of it — movies, TV, anime in one place</p>
 </p>
@@ -12,7 +12,8 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/984ec244-e725-48bf-ac20-2687d335da5f" alt="Alluva Screenshot" width="800">
+  <img src="https://media.discordapp.net/attachments/1052887260485394453/1525103306014199818/619988936-984ec244-e725-48bf-ac20-2687d335da5f.png?ex=6a522aa3&is=6a50d923&hm=532f388f836d5ebe699fabc53e10a8bba90fe16ad4d9f646a671dfa68c3efbdf&=&format=webp&quality=lossless&width=1421&height=856" alt="Alluva Screenshot" width="800">
+  
 
 </p>
 
