@@ -1,7 +1,7 @@
 <p align="center">
   <img src="public/favicon.svg" alt="Alluva Logo" width="80" height="80">
   <h1 align="center">Alluva</h1>
-  <p align="center">All of it — movies, TV, anime in one place.</p>
+  <p align="center">All of it — movies, TV, anime in one place</p>
 </p>
 
 <p align="center">
