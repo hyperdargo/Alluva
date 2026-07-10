@@ -2613,7 +2613,16 @@ async function renderDetails(container, details, type) {
     
     const grid = document.getElementById('theaterEpisodesGrid');
     grid.className = 'aniwave-ep-grid';
-    const totalEpisodes = details.episodes || 1;
+    let totalEpisodes = details.episodes;
+    if (!totalEpisodes) {
+      try {
+        const epRes = await fetch(`/api/episodes/flat?tmdbId=${details.id_mal ? '' : ''}&malId=${details.id}`);
+        const epData = await epRes.json();
+        if (epData.episodes) totalEpisodes = epData.episodes.length;
+      } catch (e) {}
+      if (!totalEpisodes) totalEpisodes = details.nextAiringEpisode?.episode ? details.nextAiringEpisode.episode - 1 : 1;
+      if (!totalEpisodes || totalEpisodes < 1) totalEpisodes = 1;
+    }
     
     const chunkSize = 100;
     const numChunks = Math.ceil(totalEpisodes / chunkSize);
@@ -2728,26 +2737,21 @@ async function renderDetails(container, details, type) {
     const grid = document.getElementById('theaterEpisodesGrid');
     grid.className = 'aniwave-ep-grid';
 
-    const renderTvEpisodes = async (seasonNum) => {
+    const renderTvEpisodes = async () => {
       grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px;"><div class="spinner"></div></div>';
       try {
-        const res = await fetch(`/api/media/tv/${details.id}/season/${seasonNum}`);
-        const seasonData = await res.json();
+        const malId = details.external_ids?.imdb_id ? '' : (details.mal_id || '');
+        const res = await fetch(`/api/episodes/flat?tmdbId=${details.id}${malId ? `&malId=${malId}` : ''}`);
+        const episodeData = await res.json();
         grid.innerHTML = '';
-        if (seasonData.episodes) {
-          const firstEp = seasonData.episodes[0];
-          if (firstEp && state.selectedMedia.selectedEpisode === firstEp.episode_number) {
-            document.getElementById('episodeSubtitle').textContent = firstEp.name ? `Episode ${firstEp.episode_number} - ${firstEp.name}` : `Episode ${firstEp.episode_number}`;
-          }
-          seasonData.episodes.forEach(ep => {
+        if (episodeData.episodes && episodeData.episodes.length > 0) {
+          episodeData.episodes.forEach(ep => {
             const btn = document.createElement('div');
             btn.className = 'aniwave-ep-btn';
             if (state.selectedMedia.selectedEpisode === ep.episode_number) btn.classList.add('active');
-            const isUpcoming = ep.air_date && new Date(ep.air_date) > new Date();
             btn.textContent = ep.episode_number;
-            btn.title = isUpcoming ? `Episode ${ep.episode_number} - Coming ${ep.air_date}` : (ep.name || `Episode ${ep.episode_number}`);
-            if (isUpcoming) btn.classList.add('upcoming');
-            const wRec = state.continueWatching.find(w => w.id == details.id && w.type == 'tv' && w.episodeNumber == ep.episode_number && w.seasonNumber == seasonNum);
+            btn.title = ep.name || `Episode ${ep.episode_number}`;
+            const wRec = state.continueWatching.find(w => w.id == details.id && w.type == 'tv' && w.episodeNumber == ep.episode_number);
             if (wRec) {
               const dot = document.createElement('span');
               dot.className = 'watched-dot';
@@ -2756,10 +2760,6 @@ async function renderDetails(container, details, type) {
             }
 
             btn.addEventListener('click', () => {
-              if (isUpcoming) {
-                showToast(`Episode ${ep.episode_number} airs on ${ep.air_date}`, 'info');
-                return;
-              }
               document.querySelectorAll('.aniwave-ep-btn').forEach(c => c.classList.remove('active'));
               btn.classList.add('active');
               state.selectedMedia.selectedEpisode = ep.episode_number;
@@ -2767,11 +2767,11 @@ async function renderDetails(container, details, type) {
 
               if (state.activeStreamTab === 'direct') {
                 const activeServer = document.querySelector('.aniwave-server-btn.active')?.dataset?.server || 'vidsrc';
-                launchDirectPlayer(activeServer, 'tv', seasonNum, ep.episode_number);
+                launchDirectPlayer(activeServer, 'tv', 1, ep.episode_number);
               } else {
                 const pad = (n) => String(n).padStart(2, '0');
-                const tvQuery = `${title} S${pad(seasonNum)}E${pad(ep.episode_number)}`;
-                triggerTorrentSearch(tvQuery, 'tv', ep.episode_number, seasonNum);
+                const tvQuery = `${title} E${pad(ep.episode_number)}`;
+                triggerTorrentSearch(tvQuery, 'tv', ep.episode_number, 1);
               }
             });
             grid.appendChild(btn);
@@ -2781,11 +2781,7 @@ async function renderDetails(container, details, type) {
         grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:20px; color:var(--color-text-muted);">Failed to load episodes.</p>';
       }
     };
-
-    seasonSelect.addEventListener('change', (e) => {
-      state.selectedMedia.selectedSeason = parseInt(e.target.value);
-      renderTvEpisodes(parseInt(e.target.value));
-    });
+    renderTvEpisodes();
 
     if (seasons.length > 0) {
       const initialSeason = seasons[0].season_number === 0 ? (seasons[1]?.season_number || 0) : seasons[0].season_number;

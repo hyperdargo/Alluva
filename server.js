@@ -1809,10 +1809,24 @@ app.get('/api/episodes/flat', async (req, res) => {
   // Fallback to MAL/Jikan
   if (malId) {
     try {
-      const epRes = await fetch(`https://api.jikan.moe/v4/anime/${malId}/episodes`);
-      const epData = await epRes.json();
-      if (epData.data && epData.data.length > 0) {
-        const flatEpisodes = epData.data.map((ep, i) => ({
+      let allEpisodes = [];
+      let page = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const epRes = await fetch(`https://api.jikan.moe/v4/anime/${malId}/episodes?page=${page}`);
+        const epData = await epRes.json();
+        if (epData.data && epData.data.length > 0) {
+          allEpisodes = allEpisodes.concat(epData.data);
+          page++;
+          if (!epData.pagination?.has_next_page) hasMore = false;
+        } else {
+          hasMore = false;
+        }
+        // Jikan rate limit: 1 request per second
+        if (hasMore) await new Promise(r => setTimeout(r, 1000));
+      }
+      if (allEpisodes.length > 0) {
+        const flatEpisodes = allEpisodes.map((ep, i) => ({
           episode_number: i + 1,
           name: ep.title || `Episode ${ep.mal_id}`
         }));
