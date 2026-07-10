@@ -12,7 +12,8 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/30ea9e94-b430-4723-a802-bfba024665c2" alt="Alluva Screenshot" width="800">
+  <img src="https://github.com/user-attachments/assets/984ec244-e725-48bf-ac20-2687d335da5f" alt="Alluva Screenshot" width="800">
+
 </p>
 
 ---
