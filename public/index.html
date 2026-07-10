@@ -4,83 +4,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#1a1a2e">
-  <meta name="description" content="Stream Vault - Your personal media hub for anime, movies, and TV shows">
-  <title>Stream Vault</title>
+  <meta name="theme-color" content="#1e1b4b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Alluva">
+
+  <meta name="description" content="Alluva - All of it: movies, TV, anime in one place.">
+  <title>Alluva</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="theme.css?v=2">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png?v=2">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png?v=2">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
 </head>
 
 <body>
+  <div id="splashScreen" style="position:fixed;inset:0;z-index:99999;background:#08080f;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s;font-family:'Inter',system-ui,sans-serif;">
+    <img src="icons/android-chrome-192x192.png" alt="Alluva" width="80" height="80" style="margin-bottom:24px;border-radius:16px;">
+    <h1 style="margin:0;font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.3px;">Alluva</h1>
+    <p style="margin:8px 0 0;font-size:13px;color:#64748b;">Loading your media hub...</p>
+    <div style="margin-top:32px;width:32px;height:32px;border:3px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  </div>
   <div id="app">
-    <!-- Sleek Top Navigation -->
-    <header class="top-nav" id="topNav">
-      <div class="nav-left">
-        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
-        <a href="#/home" class="logo" data-view="home">
-          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px; height:28px;">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-          </svg>
-          <span class="logo-text">Stream Vault</span>
-        </a>
-      </div>
+    <!-- AniWave Styled Header -->
+    <header id="topNav">
+      <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 0 15px;">
+          <div class="wrapper" style="display: flex; align-items: center; justify-content: space-between; height: 70px;">
+              <div class="start" style="display: flex; align-items: center; gap: 20px;">
+                  <button class="hamburger-btn" id="hamburgerBtn" style="background: none; border: none; color: #fff; cursor: pointer;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px;"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                  </button>
+                  <a href="#/home" class="logo" data-view="home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff;">
+                      <img src="icons/android-chrome-192x192.png" alt="Logo" style="height: 40px; width: 40px; border-radius: 8px;">
+                      <span style="font-weight: 700; font-size: 1.25rem;">Alluva</span>
+                  </a>
+                  
+                  <div id="menu">
+                      <div class="nav-indicator" id="navIndicator"></div>
+                      <a href="#/home" class="nav-tab active" data-view="home">Home</a>
+                      <a href="#/movies" class="nav-tab" data-view="movies">Movies</a>
+                      <a href="#/tv" class="nav-tab" data-view="tv">TV Shows</a>
+                      <a href="#/anime" class="nav-tab" data-view="anime">Anime</a>
+                  </div>
+              </div>
 
-      <div class="nav-right">
-        <div class="search-container">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="text" class="search-input" id="searchInput" placeholder="Search movies, tv, anime..." autocomplete="off">
-          <div class="search-suggestions" id="searchSuggestions"></div>
-        </div>
-        
-        <select class="indexer-select" id="indexerSelect" title="Select torrent indexers">
-          <option value="all">All Indexers</option>
-          <option value="1">1337x</option>
-          <option value="2">The Pirate Bay</option>
-          <option value="4">Nyaa.si (Anime)</option>
-          <option value="10">Ext.to (Movies/TV)</option>
-          <option value="11">YTS.gg (Movies)</option>
-          <option value="12">EZTVx.to (TV Shows)</option>
-        </select>
-        
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-          </svg>
-          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-          </svg>
-        </button>
-        
-        <a href="#/settings" class="nav-item icon-btn" data-view="settings" title="Settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px; height:20px;">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </a>
+              <div class="end" style="display: flex; align-items: center; gap: 16px;">
+                  <div class="search-container">
+                      <input type="text" class="search-input" id="searchInput" placeholder="Search..." autocomplete="off">
+                      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      <div class="search-suggestions" id="searchSuggestions"></div>
+                  </div>
+                  
+                  <a href="#/catalog" data-view="catalog" class="nav-item" style="color: #fff; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                    My List
+                  </a>
+
+                  <button id="themeBtn" title="Toggle theme" style="background:none;border:none;color:#fff;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:18px;transition:background 0.2s;">🌙</button>
+
+                  <button id="authBtn" style="background: #3b82f6; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 500; cursor: pointer; font-size: 13px;">Sign In</button>
+              </div>
+          </div>
       </div>
     </header>
 
@@ -101,7 +93,59 @@
         <a href="#/anime" class="drawer-link" data-view="anime">Anime</a>
         <a href="#/movies" class="drawer-link" data-view="movies">Movies</a>
         <a href="#/tv" class="drawer-link" data-view="tv">TV Shows</a>
-        <a href="#/catalog" class="drawer-link" data-view="catalog">My Catalog</a>
+        <a href="#/catalog" class="drawer-link" data-view="catalog">My List</a>
+        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0;">
+
+        <!-- VLC / Torrent Stream Guide -->
+        <div class="drawer-collapsible">
+          <button class="drawer-collapse-btn" data-target="vlcGuideContent">
+            <span>🎬 VLC & Torrent Guide</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="collapse-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          <div class="drawer-collapse-content" id="vlcGuideContent">
+            <div class="drawer-guide-section">
+              <p style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.5; margin: 0 0 8px;">
+                Some videos may fail or stutter in the web browser. Use VLC for the best playback experience.
+              </p>
+              <a href="https://filemanager.ankitgupta.com.np/files/Extention/" target="_blank" class="drawer-guide-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Download Extension
+              </a>
+              <div style="margin: 8px 0; background: rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; color: #94a3b8; font-family: monospace;">
+                ID: <span style="color: #4ade80;">demo</span> | Pass: <span style="color: #4ade80;">demodemodemo</span>
+              </div>
+              <p style="color: #64748b; font-size: 0.78rem; margin: 0; font-style: italic;">
+                Videos stream directly over the internet. Not downloaded to your PC. Buffering may occur.
+              </p>
+            </div>
+            <div class="drawer-guide-section">
+              <h4 style="color: #fff; font-size: 0.85rem; margin: 0 0 6px;">How Torrent Streaming Works</h4>
+              <p style="color: #94a3b8; font-size: 0.8rem; line-height: 1.5; margin: 0;">
+                This app uses <strong style="color:#fff;">TorrServer</strong> or <strong style="color:#fff;">WebTorrent</strong> to stream torrents directly without downloading.
+                When you click play, the torrent is fetched from indexers, streamed in chunks, and played in your chosen player (VLC/MPV/browser).
+                The VLC extension routes streams to your local VLC for smooth playback of any format.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <a href="#/suggestions" class="drawer-link" data-view="suggestions" style="color:var(--color-text-secondary);">💬 Suggestions</a>
+
+        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0;">
+        <a href="javascript:void(0)" class="drawer-link" id="drawerAboutBtn">ℹ️ About</a>
+        <a href="#/settings" class="drawer-link" data-view="settings">⚙ Settings</a>
+
+        <!-- Spacer to push bottom items down -->
+        <div style="flex:1;min-height:16px;"></div>
+
+        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 4px 0;">
+        <div style="padding: 6px 16px;">
+          <label style="font-size: 11px; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Torrent Indexer</label>
+          <select class="drawer-indexer-select" id="drawerIndexerSelect" style="width:100%; background:rgba(255,255,255,0.06); color:#fff; border:1px solid rgba(255,255,255,0.1); padding:8px; border-radius:4px; font-size:13px;">
+            <option value="all">All Indexers</option>
+          </select>
+        </div>
+        <a href="javascript:void(0)" class="drawer-link" id="drawerAuthBtn" style="color: #3b82f6;font-size:13px;">Sign In</a>
       </nav>
     </aside>
 
@@ -117,173 +161,75 @@
             <!-- Populated dynamically by app.js -->
           </div>
 
-          <div class="extension-notice-banner" style="background: linear-gradient(135deg, rgba(230, 57, 70, 0.1) 0%, rgba(29, 53, 87, 0.2) 100%); border: 1px solid rgba(230, 57, 70, 0.2); border-radius: 12px; padding: 20px; margin: 24px 32px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-              <h3 style="margin: 0; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.4rem;">🎬</span> <span id="bannerTitle">For the Best Experience, Use VLC!</span>
-              </h3>
-              <select id="bannerLangSelect" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; outline: none;">
-                <option value="en" style="color: #000;">🇬🇧 English</option>
-                <option value="np" style="color: #000;">🇳🇵 Nepali</option>
-                <option value="hi" style="color: #000;">🇮🇳 Hindi</option>
-                <option value="it" style="color: #000;">🇮🇹 Italian</option>
-                <option value="ja" style="color: #000;">🇯🇵 Japanese</option>
-                <option value="zh" style="color: #000;">🇨🇳 Chinese</option>
-                <option value="ru" style="color: #000;">🇷🇺 Russian</option>
-              </select>
-            </div>
-            
-            <p id="bannerDesc1" style="margin: 0; color: #cbd5e1; font-size: 0.95rem; line-height: 1.5;">
-              Some videos may fail or stutter in the web browser. We highly recommend installing our extension to play videos directly in VLC Media Player (which plays everything flawlessly!).
-            </p>
-            
-            <div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; border: 1px solid rgba(255,255,255,0.05);">
-              <div style="color: #94a3b8; font-size: 0.9rem;">
-                <span id="bannerDesc2">Download the extension and follow the video guide here:</span><br>
-                <a href="https://filemanager.ankitgupta.com.np/files/Extention/" target="_blank" style="color: #60a5fa; text-decoration: none; font-weight: 500; font-size: 1rem; display: inline-block; margin-top: 6px; transition: color 0.2s;" onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='#60a5fa'">https://filemanager.ankitgupta.com.np/files/Extention/</a>
-              </div>
-              <div style="background: rgba(255,255,255,0.08); padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; color: #fff; font-family: monospace; border: 1px solid rgba(255,255,255,0.1);">
-                ID: <span style="color: #4ade80;">demo</span> <span style="opacity:0.5; margin: 0 8px;">|</span> Pass: <span style="color: #4ade80;">demodemodemo</span>
-              </div>
-            </div>
-            
-            <p id="bannerDesc3" style="margin: 0; color: #64748b; font-size: 0.85rem; font-style: italic;">
-              Note: Videos stream directly over the internet. They are not downloaded to your PC, so it may take a few seconds to buffer before playing.
-            </p>
-          </div>
-          
-          <script>
-            const translations = {
-              en: {
-                title: "For the Best Experience, Use VLC!",
-                desc1: "Some videos may fail or stutter in the web browser. We highly recommend installing our extension to play videos directly in VLC Media Player (which plays everything flawlessly!).",
-                desc2: "Download the extension and follow the video guide here:",
-                desc3: "Note: Videos stream directly over the internet. They are not downloaded to your PC, so it may take a few seconds to buffer before playing."
-              },
-              np: {
-                title: "उत्कृष्ट अनुभवको लागि, VLC प्रयोग गर्नुहोस्!",
-                desc1: "केही भिडियोहरू वेब ब्राउजरमा चल्न नसक्ने वा अड्किने हुन सक्छन्। हामी तपाइँलाई VLC मिडिया प्लेयरमा सिधै भिडियोहरू प्ले गर्न हाम्रो एक्सटेन्सन स्थापना गर्न सिफारिस गर्छौं (जसले सबै कुरा सहज रूपमा प्ले गर्छ!)।",
-                desc2: "एक्सटेन्सन डाउनलोड गर्नुहोस् र यहाँ भिडियो गाइड पछ्याउनुहोस्:",
-                desc3: "नोट: भिडियोहरू सिधै इन्टरनेटमा स्ट्रिम हुन्छन्। तिनीहरू तपाईंको पीसीमा डाउनलोड हुँदैनन्, त्यसैले प्ले गर्नु अघि बफर हुन केही सेकेन्ड लाग्न सक्छ।"
-              },
-              hi: {
-                title: "बेहतरीन अनुभव के लिए, VLC का उपयोग करें!",
-                desc1: "कुछ वीडियो वेब ब्राउज़र में चलने में विफल हो सकते हैं। हम अनुशंसा करते हैं कि आप वीडियो को सीधे VLC मीडिया प्लेयर में चलाने के लिए हमारा एक्सटेंशन इंस्टॉल करें (जो सब कुछ चलाता है!)।",
-                desc2: "एक्सटेंशन डाउनलोड करें और यहाँ वीडियो गाइड का पालन करें:",
-                desc3: "नोट: वीडियो सीधे इंटरनेट पर स्ट्रीम होते हैं। वे आपके पीसी में डाउनलोड नहीं होते हैं, इसलिए चलने से पहले बफर होने में कुछ सेकंड लग सकते हैं।"
-              },
-              it: {
-                title: "Per la migliore esperienza, usa VLC!",
-                desc1: "Alcuni video potrebbero bloccarsi nel browser. Consigliamo di installare la nostra estensione per riprodurre i video direttamente su VLC Media Player (che legge tutto senza problemi!).",
-                desc2: "Scarica l'estensione e segui la video guida qui:",
-                desc3: "Nota: i video vengono trasmessi direttamente via internet. Non vengono scaricati sul PC, quindi potrebbe volerci qualche secondo di caricamento prima dell'inizio."
-              },
-              ja: {
-                title: "最高のエクスペリエンスを得るには、VLCを使用してください！",
-                desc1: "Webブラウザでは一部のビデオが再生できなかったり、途切れたりする場合があります。すべてのビデオをスムーズに再生できるVLCメディアプレーヤーで直接再生するために、拡張機能をインストールすることを強くお勧めします。",
-                desc2: "拡張機能をダウンロードし、こちらのビデオガイドに従ってください:",
-                desc3: "注：ビデオはインターネット経由で直接ストリーミングされます。PCにはダウンロードされないため、再生が始まるまでに数秒のバッファリングが必要になる場合があります。"
-              },
-              zh: {
-                title: "为了获得最佳体验，请使用VLC！",
-                desc1: "有些视频可能无法在网络浏览器中正常播放。我们强烈建议安装我们的扩展程序，直接在VLC媒体播放器（可完美播放所有内容！）中播放视频。",
-                desc2: "在此处下载扩展程序并按照视频指南操作：",
-                desc3: "注：视频是直接通过互联网传输的。它们不会下载到您的电脑上，因此在播放前可能需要几秒钟的缓冲时间。"
-              },
-              ru: {
-                title: "Для лучшего качества используйте VLC!",
-                desc1: "Некоторые видео могут не воспроизводиться в браузере. Мы настоятельно рекомендуем установить наше расширение для просмотра видео напрямую через VLC Media Player (который воспроизводит всё без проблем!).",
-                desc2: "Скачайте расширение и следуйте видеоинструкции здесь:",
-                desc3: "Примечание: видео транслируются напрямую через интернет. Они не скачиваются на ваш ПК, поэтому перед началом воспроизведения может потребоваться несколько секунд для буферизации."
-              }
-            };
-          
-            document.getElementById('bannerLangSelect').addEventListener('change', (e) => {
-              const lang = e.target.value;
-              document.getElementById('bannerTitle').textContent = translations[lang].title;
-              document.getElementById('bannerDesc1').textContent = translations[lang].desc1;
-              document.getElementById('bannerDesc2').textContent = translations[lang].desc2;
-              document.getElementById('bannerDesc3').textContent = translations[lang].desc3;
-            });
-          </script>
+
 
           <!-- Continue Watching -->
           <section class="content-section" id="continueWatchingSection" style="display: none;">
             <div class="section-header">
-              <h2 class="section-title">Continue Watching</h2>
+              <h2>Continue Watching</h2>
             </div>
             <div class="content-grid" id="continueWatchingGrid"></div>
           </section>
 
-          <!-- Trending Anime -->
-          <section class="content-section">
+          <section class="content-section" id="myListSection" style="display: none;">
             <div class="section-header">
-              <h2 class="section-title">Trending Anime</h2>
+              <h2>My List</h2>
+            </div>
+            <div class="content-grid" id="myListGrid"></div>
+          </section>
+
+          <!-- Hollywood Movies Section -->
+          <section class="content-section" id="sectionHollyMovies">
+            <div class="section-header">
+              <h2 class="section-title">Hollywood Movies</h2>
+              <div class="section-filter-pills" id="filterHollyMovies">
+                <button class="filter-pill active" data-type="trending">Trending</button>
+                <button class="filter-pill" data-type="top">Top Rated</button>
+                <button class="filter-pill" data-type="upcoming">Upcoming</button>
+              </div>
+              <a href="#/movies" class="section-link" data-view="movies">View All</a>
+            </div>
+            <div class="content-grid" id="sectionHollyMoviesGrid"></div>
+          </section>
+
+          <!-- Bollywood Movies Section -->
+          <section class="content-section" id="sectionBollyMovies">
+            <div class="section-header">
+              <h2 class="section-title">Bollywood Movies</h2>
+              <div class="section-filter-pills" id="filterBollyMovies">
+                <button class="filter-pill active" data-type="latest">Latest</button>
+                <button class="filter-pill" data-type="upcoming">Upcoming</button>
+              </div>
+              <a href="#/movies" class="section-link" data-view="movies">View All</a>
+            </div>
+            <div class="content-grid" id="sectionBollyMoviesGrid"></div>
+          </section>
+
+          <!-- Anime Section -->
+          <section class="content-section" id="sectionAnime">
+            <div class="section-header">
+              <h2 class="section-title">Anime</h2>
+              <div class="section-filter-pills" id="filterAnime">
+                <button class="filter-pill active" data-type="airing">Airing</button>
+                <button class="filter-pill" data-type="trending">Trending</button>
+                <button class="filter-pill" data-type="upcoming">Upcoming</button>
+              </div>
               <a href="#/anime" class="section-link" data-view="anime">View All</a>
             </div>
-            <div class="content-grid" id="trendingAnimeGrid"></div>
+            <div class="content-grid" id="sectionAnimeGrid"></div>
           </section>
 
-          <!-- Popular Movies -->
-          <section class="content-section">
+          <!-- TV Shows Section -->
+          <section class="content-section" id="sectionHollyTV">
             <div class="section-header">
-              <h2 class="section-title">Popular Movies</h2>
-              <a href="#/movies" class="section-link" data-view="movies">View All</a>
-            </div>
-            <div class="content-grid" id="popularMoviesGrid"></div>
-          </section>
-
-          <!-- Trending TV Shows -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Trending TV Shows</h2>
+              <h2 class="section-title">TV Shows</h2>
+              <div class="section-filter-pills" id="filterHollyTV">
+                <button class="filter-pill active" data-type="trending">Trending</button>
+                <button class="filter-pill" data-type="top">Top Rated</button>
+              </div>
               <a href="#/tv" class="section-link" data-view="tv">View All</a>
             </div>
-            <div class="content-grid" id="trendingTVGrid"></div>
-          </section>
-
-          <!-- Upcoming Movies -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Upcoming Movies</h2>
-              <a href="#/movies" class="section-link" data-view="movies">View All</a>
-            </div>
-            <div class="content-grid" id="upcomingMoviesGrid"></div>
-          </section>
-
-          <!-- Top Rated Movies -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Top Rated Movies</h2>
-              <a href="#/movies" class="section-link" data-view="movies">View All</a>
-            </div>
-            <div class="content-grid" id="topRatedMoviesGrid"></div>
-          </section>
-
-          <!-- Top Rated TV Shows -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Top Rated TV Shows</h2>
-              <a href="#/tv" class="section-link" data-view="tv">View All</a>
-            </div>
-            <div class="content-grid" id="topRatedTVGrid"></div>
-          </section>
-
-          <!-- Upcoming Anime -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Upcoming Anime</h2>
-              <a href="#/anime" class="section-link" data-view="anime">View All</a>
-            </div>
-            <div class="content-grid" id="upcomingAnimeGrid"></div>
-          </section>
-
-          <!-- Recent Torrents -->
-          <section class="content-section">
-            <div class="section-header">
-              <h2 class="section-title">Recent Torrents</h2>
-            </div>
-            <div class="content-grid" id="recentTorrentsGrid"></div>
+            <div class="content-grid" id="sectionHollyTVGrid"></div>
           </section>
         </section>
 
@@ -292,6 +238,19 @@
           <div class="view-header">
             <h1 class="view-title">Anime</h1>
             <div class="view-filters">
+              <select class="filter-select" id="animeGenreFilter">
+                <option value="">All Genres</option>
+                <option value="Action">Action</option>
+                <option value="Adventure">Adventure</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Drama">Drama</option>
+                <option value="Fantasy">Fantasy</option>
+                <option value="Horror">Horror</option>
+                <option value="Romance">Romance</option>
+                <option value="Sci-Fi">Sci-Fi</option>
+                <option value="Slice of Life">Slice of Life</option>
+                <option value="Hentai" class="adult-genre" style="display:none;">Hentai</option>
+              </select>
               <select class="filter-select" id="animeSeasonFilter">
                 <option value="">All Seasons</option>
                 <option value="WINTER">Winter</option>
@@ -308,6 +267,7 @@
                 <option value="FINISHED">Finished</option>
                 <option value="NOT_YET_RELEASED">Upcoming</option>
               </select>
+              <button class="btn btn-primary" id="animeFilterApply" style="padding:6px 16px;font-size:13px;height:34px;">Search</button>
             </div>
           </div>
           <div class="content-grid" id="animeGrid"></div>
@@ -323,7 +283,28 @@
               </select>
               <select class="filter-select" id="movieGenreFilter">
                 <option value="">All Genres</option>
+                <option value="adult" class="adult-genre" style="display:none;">Adult (18+)</option>
               </select>
+              <select class="filter-select" id="movieLanguageFilter">
+                <option value="">All Languages</option>
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="ko">Korean</option>
+                <option value="ja">Japanese</option>
+                <option value="zh">Chinese</option>
+                <option value="ta">Tamil</option>
+                <option value="te">Telugu</option>
+                <option value="ml">Malayalam</option>
+                <option value="kn">Kannada</option>
+                <option value="bn">Bengali</option>
+                <option value="mr">Marathi</option>
+                <option value="th">Thai</option>
+                <option value="fr">French</option>
+                <option value="es">Spanish</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+              </select>
+              <button class="btn btn-primary" id="movieFilterApply" style="padding:6px 16px;font-size:13px;height:34px;">Search</button>
             </div>
           </div>
           <div class="content-grid" id="moviesGrid"></div>
@@ -339,7 +320,28 @@
               </select>
               <select class="filter-select" id="tvGenreFilter">
                 <option value="">All Genres</option>
+                <option value="adult" class="adult-genre" style="display:none;">Adult (18+)</option>
               </select>
+              <select class="filter-select" id="tvLanguageFilter">
+                <option value="">All Languages</option>
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="ko">Korean</option>
+                <option value="ja">Japanese</option>
+                <option value="zh">Chinese</option>
+                <option value="ta">Tamil</option>
+                <option value="te">Telugu</option>
+                <option value="ml">Malayalam</option>
+                <option value="kn">Kannada</option>
+                <option value="bn">Bengali</option>
+                <option value="mr">Marathi</option>
+                <option value="th">Thai</option>
+                <option value="fr">French</option>
+                <option value="es">Spanish</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+              </select>
+              <button class="btn btn-primary" id="tvFilterApply" style="padding:6px 16px;font-size:13px;height:34px;">Search</button>
             </div>
           </div>
           <div class="content-grid" id="tvGrid"></div>
@@ -363,7 +365,7 @@
         <!-- Catalog View -->
         <section class="view" id="catalogView">
           <div class="view-header">
-            <h1 class="view-title">My Catalog</h1>
+            <h1 class="view-title">My List</h1>
           </div>
           <div class="content-grid" id="catalogGrid"></div>
         </section>
@@ -395,6 +397,27 @@
           </div>
         </section>
 
+        <!-- Suggestions View -->
+        <section class="view" id="suggestionsView">
+          <div class="view-header" style="justify-content:space-between;align-items:center;">
+            <h1 class="view-title">💬 Suggestions</h1>
+            <div class="suggestion-global-tabs">
+              <button class="suggestion-tab active" data-channel="notice">📢 Notice</button>
+              <button class="suggestion-tab" data-channel="suggestion">💡 Suggestion</button>
+              <button class="suggestion-tab" data-channel="status">📋 Status</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;" id="suggestionTagFilters">
+            <button class="suggestion-tag-filter active" data-tag="">All</button>
+            <button class="suggestion-tag-filter" data-tag="under-review">Under Review</button>
+            <button class="suggestion-tag-filter" data-tag="accepted">Accepted</button>
+            <button class="suggestion-tag-filter" data-tag="rejected">Rejected</button>
+            <button class="suggestion-tag-filter" data-tag="pending">Pending</button>
+            <button class="suggestion-tag-filter" data-tag="implementing">Implementing</button>
+          </div>
+          <div id="suggestionsViewContent" style="margin-top:8px;"></div>
+        </section>
+
         <!-- Settings View -->
         <section class="view" id="settingsView">
           <div class="settings-container">
@@ -403,15 +426,34 @@
             <div class="settings-section">
               <h2 class="settings-title">Appearance</h2>
               <div class="setting-item">
-                <div class="setting-info">
-                  <span class="setting-label">Theme</span>
-                  <span class="setting-description">Choose your preferred color scheme</span>
+                  <div class="setting-info">
+                    <span class="setting-label">Theme</span>
+                    <span class="setting-description">Dark theme only</span>
+                  </div>
+                  <select class="setting-select" id="themeSetting" style="display:none;">
+                    <option value="dark" selected>Dark</option>
+                  </select>
+                  <span style="color:#64748b;font-size:13px;">🌙 Dark</span>
                 </div>
-                <select class="setting-select" id="themeSetting">
-                  <option value="system">System</option>
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                </select>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <span class="setting-label">Accent Color</span>
+                    <span class="setting-description">Choose accent color for buttons and highlights</span>
+                  </div>
+                  <select class="setting-select" id="accentSetting">
+                    <option value="blue">Blue</option>
+                    <option value="purple">Purple</option>
+                  </select>
+                </div>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-label">Enable 18+ Content</span>
+                  <span class="setting-description">Show adult movies, TV shows, and anime</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="adultContentSetting">
+                  <span class="slider round"></span>
+                </label>
               </div>
             </div>
 
@@ -451,28 +493,33 @@
                   <span class="setting-label">VLC Path</span>
                   <span class="setting-description">Leave blank to use default location</span>
                 </div>
-                <input type="text" class="setting-input" id="vlcPathSetting" placeholder="C:\Program Files\VideoLAN\VLC\vlc.exe" style="width: 100%; max-width: 100%; margin-top: 4px;">
+                <input type="text" class="setting-input" id="vlcPathSetting"
+                  placeholder="C:\Program Files\VideoLAN\VLC\vlc.exe"
+                  style="width: 100%; max-width: 100%; margin-top: 4px;">
               </div>
               <div class="setting-item flex-column">
                 <div class="setting-info" style="margin-bottom: 8px;">
                   <span class="setting-label">VLC Arguments</span>
                   <span class="setting-description">Command line arguments to pass to VLC</span>
                 </div>
-                <input type="text" class="setting-input" id="vlcArgsSetting" placeholder="--network-caching=3000" style="width: 100%; max-width: 100%; margin-top: 4px;">
+                <input type="text" class="setting-input" id="vlcArgsSetting" placeholder="--network-caching=3000"
+                  style="width: 100%; max-width: 100%; margin-top: 4px;">
               </div>
               <div class="setting-item flex-column">
                 <div class="setting-info" style="margin-bottom: 8px;">
                   <span class="setting-label">MPV Path</span>
                   <span class="setting-description">Leave blank to launch 'mpv' from system PATH</span>
                 </div>
-                <input type="text" class="setting-input" id="mpvPathSetting" placeholder="C:\mpv\mpv.exe" style="width: 100%; max-width: 100%; margin-top: 4px;">
+                <input type="text" class="setting-input" id="mpvPathSetting" placeholder="C:\mpv\mpv.exe"
+                  style="width: 100%; max-width: 100%; margin-top: 4px;">
               </div>
               <div class="setting-item flex-column">
                 <div class="setting-info" style="margin-bottom: 8px;">
                   <span class="setting-label">MPV Arguments</span>
                   <span class="setting-description">Command line arguments to pass to MPV</span>
                 </div>
-                <input type="text" class="setting-input" id="mpvArgsSetting" placeholder="--cache=yes" style="width: 100%; max-width: 100%; margin-top: 4px;">
+                <input type="text" class="setting-input" id="mpvArgsSetting" placeholder="--cache=yes"
+                  style="width: 100%; max-width: 100%; margin-top: 4px;">
               </div>
             </div>
 
@@ -508,7 +555,7 @@
             <div class="settings-section">
               <h2 class="settings-title">About</h2>
               <div class="about-info">
-                <p>Stream Vault v1.0.0</p>
+                <p>Alluva v1.1.0</p>
                 <p>A self-hosted personal media hub inspired by Jellyfin</p>
                 <p>Built with Express.js, AniList, TMDB, and Torznab indexers</p>
               </div>
@@ -544,6 +591,18 @@
             </div>
 
             <div class="detail-content" id="detailContent"></div>
+            <!-- Detail Footer -->
+            <footer class="app-footer detail-footer">
+              <span class="footer-left">&copy; DTEmpire (DargoTamber) | v1.1.0</span>
+              <button class="footer-about-btn" onclick="document.getElementById('aboutOverlay').classList.add('open')">About</button>
+              <div class="footer-right">
+                <a href="#/home" style="display:flex;align-items:center;" title="Alluva Home"><img src="icons/favicon-32x32.png" alt="Alluva" style="height:24px;width:24px;border-radius:4px;"></a>
+                <a href="https://discord.gg/bBP2BEHWP5" target="_blank" rel="noopener" class="footer-discord">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+                  Discord
+                </a>
+              </div>
+            </footer>
           </div>
         </section>
 
@@ -591,6 +650,33 @@
           </div>
         </div>
 
+        <!-- Auth Modal -->
+        <div class="modal-overlay" id="authModalOverlay" style="display: none;">
+          <div class="modal">
+            <div class="modal-header">
+              <h3 id="authModalTitle">Sign In</h3>
+              <button class="modal-close" id="authModalClose">✕</button>
+            </div>
+            <div class="modal-body">
+              <form id="authForm" style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                  <label for="authUsername">Username</label>
+                  <input type="text" id="authUsername" required>
+                </div>
+                <div class="form-group">
+                  <label for="authPassword">Password</label>
+                  <input type="password" id="authPassword" required>
+                </div>
+                <div style="color: var(--color-error); font-size: 14px; display: none;" id="authError"></div>
+                <div class="form-actions" style="flex-direction: column; gap: 8px;">
+                  <button type="submit" class="btn btn-primary" id="authSubmitBtn" style="width: 100%;">Sign In</button>
+                  <button type="button" class="btn btn-secondary" id="authToggleBtn" style="width: 100%; border: none;">Don't have an account? Sign Up</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
         <!-- Loading Overlay -->
         <div class="loading-overlay" id="loadingOverlay" style="display: none;">
           <div class="spinner"></div>
@@ -601,13 +687,42 @@
         <div class="toast-container" id="toastContainer"></div>
       </div>
 
+      <!-- About Modal -->
+      <div class="about-overlay" id="aboutOverlay">
+        <div class="about-modal">
+          <button class="about-close" id="aboutClose">&times;</button>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <a href="#/home"><img src="icons/android-chrome-192x192.png" alt="Alluva" style="width:48px;height:48px;border-radius:12px;"></a>
+            <h2 style="margin:0;">About Alluva</h2>
+          </div>
+          <p>Alluva was originally built as <strong>Stream Vault</strong> — a personal media hub for streaming anime, movies, and TV shows. The goal was simple: one place to search, browse, and play everything.</p>
+          <p>Over time it grew — better filtering, torrent streaming, VLC/MPV integration, a suggestion system, per-section filters, and a full admin workflow. The UI got redesigned with per-view accent colors and iOS-style navigation.</p>
+          <p>The name <strong>Alluva</strong> came later — "all of it" — because that's what it is. Movies, TV, anime, direct play, torrents, all of it in one place. One word. Rolls off the tongue.</p>
+          <p>Created by <strong>DTEmpire (DargoTamber)</strong> for the media streaming community.</p>
+          <div class="about-features">
+            <span>Direct Play</span><span>Torrent Streaming</span><span>VLC/MPV</span><span>Suggestions</span><span>18+ Filter</span><span>Adult Block</span><span>Per-View Colors</span><span>iOS Tabs</span><span>Dark/Light</span><span>PWA</span>
+          </div>
+        </div>
+      </div>
+
       <footer class="app-footer">
-        <p>&copy; copyright by DTEmpire (DargoTamber) | version 1.0.2</p>
+        <span class="footer-left">&copy; DTEmpire (DargoTamber) | v1.1.0</span>
+        <button id="aboutBtn" class="footer-about-btn">About</button>
+        <div class="footer-right">
+          <a href="#/home" style="display:flex;align-items:center;" title="Alluva Home"><img src="icons/favicon-32x32.png" alt="Alluva" style="height:24px;width:24px;border-radius:4px;"></a>
+          <a href="https://discord.gg/bBP2BEHWP5" target="_blank" rel="noopener" class="footer-discord">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+            Discord
+          </a>
+        </div>
       </footer>
     </main>
   </div>
 
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-  <script src="app.js"></script>
+  <script src="https://content.jwplatform.com/libraries/KB5zFt7A.js"></script>
+  <script src="app.js?v=28"></script>
+  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
 </body>
+
 </html>
