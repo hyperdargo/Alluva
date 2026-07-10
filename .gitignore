@@ -2,3 +2,16 @@ node_modules/
 .env
 catalog.json
 *.bak
+refactor.js
+refactor.py
+users.json
+suggestions.json
+*.log
+.DS_Store
+Thumbs.db
+.pm2/
+bug_fixes_v1.0.3.md
+native-host/host.log
+native-host/com.streamvault.launcher.json
+register-players.reg
+*.zip

@@ -1,9 +1,0 @@
-{
-  "name": "com.streamvault.launcher",
-  "description": "Stream Vault Native Launcher",
-  "path": "O:\\website\\native-host\\run_host.bat",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://ojopnkcbpkodalfcodminlingmbjlclm/"
-  ]
-}

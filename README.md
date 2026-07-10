@@ -1,33 +1,39 @@
 <p align="center">
-  <img src="public/favicon.svg" alt="Stream Vault Logo" width="80" height="80">
-  <h1 align="center">Stream Vault</h1>
-  <p align="center">Your Personal Media Hub for Anime, Movies & TV Shows</p>
+  <img src="public/favicon.svg" alt="Alluva Logo" width="80" height="80">
+  <h1 align="center">Alluva</h1>
+  <p align="center">All of it — movies, TV, anime in one place</p>
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
-  <a href="package.json"><img src="https://img.shields.io/badge/Version-1.0.6-success.svg" alt="Version"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/Version-1.1.0-success.svg" alt="Version"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-16%2B-green.svg" alt="Node.js"></a>
   <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg" alt="Status">
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/30ea9e94-b430-4723-a802-bfba024665c2" alt="Stream Vault Screenshot" width="800">
+  <img src="https://github.com/user-attachments/assets/30ea9e94-b430-4723-a802-bfba024665c2" alt="Alluva Screenshot" width="800">
 </p>
 
 ---
 
 ## ✨ Features
 
-- **Direct Play** first stream plays instantly via dedicated direct-play servers
-- **Torrent Streaming** download media or play via VLC using the browser extension
-- **Search** concurrent results from Prowlarr indexers + YTS
+- **Direct Play** stream instantly via multi-server direct-play backends
+- **Torrent Streaming** download media or play via VLC/MPV using the browser extension
+- **Search** concurrent results from Prowlarr indexers + YTS + direct play
 - **Metadata** enriched from AniList (anime) and TMDB (movies/shows)
-- **Stream** directly in browser or route to VLC/MPV
-- **Anime & Movies & TV** separated sections with per-section filters
+- **Anime & Movies & TV** separated sections with per-section filter pills
+- **Hero Banner** carousel with auto-rotate, arrows, swipe, and staggered content animation
 - **Language Filter** 16-language dropdown for Movies & TV
-- **Suggestion System** three-channel notice/suggestion/status with admin workflow and tag-based filtering
-- **Responsive** dark UI built with vanilla JS
+- **Suggestion System** three-channel (notice/suggestion/status) with admin workflow, tags, replies, and edit/delete
+- **18+ Adult Content Filter** multi-signal blocking on server + client
+- **Per-View Accent Colors** Home=amber, Movies=red, TV=teal, Anime=purple
+- **iOS Tab Bar** glassmorphism oval pill tabs with sliding indicator animation
+- **Dark/Light Theme** toggle with localStorage persistence
+- **Responsive 3-Row Grid** adapts to all screen sizes
+- **Fixed Header** with hamburger menu working on all views including detail pages
+- **About Modal** with site history, name origin, feature list
 - **Self-hosted** — no data leaves your server
 
 ---
@@ -72,7 +78,7 @@ Visit `http://localhost:3000`
 ### Torrent Indexers
 
 | Indexer | Content | Integration |
-| --- | --- | --- |
+|---------|---------|-------------|
 | The Pirate Bay | Movies/Shows | Prowlarr Native |
 | YTS | HD Movies | Direct Scraper |
 | Nyaa.si | Anime | Prowlarr Native / Direct |
@@ -85,7 +91,7 @@ Visit `http://localhost:3000`
 ### Direct Play Sources
 
 | Source | Content | Type |
-| --- | --- | --- |
+|--------|---------|------|
 | Multi-server direct-play backends | Movies / TV / Anime | Instant stream (no download) |
 
 ### Metadata
@@ -109,7 +115,7 @@ TMDB_API_KEY=your_tmdb_key
 ## 💾 Project Structure
 
 ```
-stream-vault/
+alluva/
 ├── extension/                     # Browser extension
 │   ├── EXTENSION_SETUP.md
 │   ├── background.js
@@ -179,5 +185,5 @@ Copyright (c) 2026 DTEmpire (DargoTamber)
 
 <p align="center">
   Made with ❤️ for the Media Streaming Community<br>
-  <strong>© DTEmpire (DargoTamber) | v1.0.6</strong>
+  <strong>© DTEmpire (DargoTamber) | v1.1.0</strong>
 </p>

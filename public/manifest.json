@@ -1,7 +1,7 @@
 {
-  "name": "Stream Vault",
-  "short_name": "StreamVault",
-  "description": "Your personal media hub for movies, TV shows, and anime",
+  "name": "Alluva",
+  "short_name": "Alluva",
+  "description": "All of it: movies, TV, anime in one place",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#08080f",

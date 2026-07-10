@@ -1,7 +1,7 @@
 {
-  "name": "stream-vault",
-  "version": "1.0.6",
-  "description": "Stream Vault - Personal Media Hub with torrent search, metadata, and in-browser playback",
+  "name": "alluva",
+  "version": "1.1.0",
+  "description": "Alluva - All of it: movies, TV, anime in one place",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
