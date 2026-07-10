@@ -9,6 +9,8 @@ const http = require('http');
 const urlModule = require('url');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const NodeCache = require('node-cache');
+const episodeCache = new NodeCache({ stdTTL: 3600 });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_streamvault_key_123!';
 const USERS_FILE = './users.json';
@@ -1764,6 +1766,9 @@ app.get('/api/media/tv/:id/season/:seasonNum', async (req, res) => {
 app.get('/api/episodes/flat', async (req, res) => {
   const tmdbId = parseInt(req.query.tmdbId);
   const malId = parseInt(req.query.malId);
+  const cacheKey = `flat_ep_${tmdbId || ''}_${malId || ''}`;
+  const cached = episodeCache.get(cacheKey);
+  if (cached) return res.json(cached);
 
   // Try TMDB first
   if (tmdbId) {
@@ -1798,7 +1803,9 @@ app.get('/api/episodes/flat', async (req, res) => {
         }
 
         if (flatEpisodes.length > 0) {
-          return res.json({ episodes: flatEpisodes, source: 'tmdb' });
+          const result = { episodes: flatEpisodes, source: 'tmdb' };
+          episodeCache.set(cacheKey, result);
+          return res.json(result);
         }
       }
     } catch (e) {
@@ -1822,15 +1829,16 @@ app.get('/api/episodes/flat', async (req, res) => {
         } else {
           hasMore = false;
         }
-        // Jikan rate limit: 1 request per second
-        if (hasMore) await new Promise(r => setTimeout(r, 1000));
+        if (hasMore) await new Promise(r => setTimeout(r, 350));
       }
       if (allEpisodes.length > 0) {
         const flatEpisodes = allEpisodes.map((ep, i) => ({
           episode_number: i + 1,
           name: ep.title || `Episode ${ep.mal_id}`
         }));
-        return res.json({ episodes: flatEpisodes, source: 'mal' });
+        const result = { episodes: flatEpisodes, source: 'mal' };
+        episodeCache.set(cacheKey, result);
+        return res.json(result);
       }
     } catch (e) {
       console.error('Jikan episodes error:', e.message);
