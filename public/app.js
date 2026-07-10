@@ -1383,12 +1383,14 @@ async function loadMoviesView(page = 1) {
 
   const year = document.getElementById('movieYearFilter').value;
   const genre = document.getElementById('movieGenreFilter').value;
-  // Apply pill preset for Bollywood → Hindi
+  // Apply pill preset for Bollywood → Hindi, otherwise reset language
   if (page === 1 && state.pillPreset && state.pillPreset.view === 'movies') {
     if (state.pillPreset.language) {
       document.getElementById('movieLanguageFilter').value = state.pillPreset.language;
     }
     state.pillPreset = null;
+  } else if (page === 1) {
+    document.getElementById('movieLanguageFilter').value = '';
   }
 
   const language = document.getElementById('movieLanguageFilter')?.value || '';
@@ -1475,6 +1477,8 @@ async function loadTVView(page = 1) {
       document.getElementById('tvLanguageFilter').value = state.pillPreset.language;
     }
     state.pillPreset = null;
+  } else if (page === 1) {
+    document.getElementById('tvLanguageFilter').value = '';
   }
 
   const language = document.getElementById('tvLanguageFilter')?.value || '';
@@ -2597,11 +2601,6 @@ async function renderDetails(container, details, type) {
       triggerTorrentSearch(title, 'movie');
     });
 
-    // Auto play movie on load (first SUB server already auto-clicked above)
-    setTimeout(() => {
-      triggerTorrentSearch(title, 'movie');
-    }, 150);
-
   } else if (type === 'anime') {
     document.getElementById('theaterLeft').style.display = 'flex';
     document.getElementById('theaterLeft').className = 'theater-left aniwave-ep-container';
@@ -3142,7 +3141,6 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
     const selectedIndexers = indexersToUse.join(',');
     
     let finalQuery = query;
-    let isHindiSearch = false;
     if (categoryType === 'anime') {
       const audioSelect = document.getElementById('animeAudioToggle');
       if (audioSelect) {
@@ -3150,12 +3148,7 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
         if (audioSelect.value === 'dub') finalQuery += ' Dub';
       }
     } else if (categoryType === 'movie' || categoryType === 'tv') {
-      const originalLang = state.selectedMedia?.details?.original_language;
-      // Auto-append Hindi for English or South Indian movies if not explicitly searched
-      if (!query.toLowerCase().includes('hindi') && (originalLang === 'en' || originalLang === 'te' || originalLang === 'ta' || originalLang === 'ml')) {
-          finalQuery += ' Hindi';
-          isHindiSearch = true;
-      }
+      // Just use the original query as-is
     }
 
     const stream = new EventSource(`/api/search/stream?q=${encodeURIComponent(finalQuery)}&indexers=${selectedIndexers}`);
@@ -3179,15 +3172,6 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
             return;
           }
           
-          if (isHindiSearch) {
-             grid.innerHTML = '<div class="spinner-container"><div class="spinner"></div><p style="margin-left: 12px;">No Hindi dubbed torrents found. Falling back to original language...</p></div>';
-             setTimeout(() => {
-               // Re-trigger search without appending Hindi
-               triggerTorrentSearch(query, categoryType, episodeNum, seasonNum);
-             }, 500);
-             return;
-          }
-
           grid.innerHTML = `<div class="empty-state"><h3>No Torrent Results</h3><p>Try searching for a different query or check settings to enable other torrent indexers.</p></div>`;
         }
         return;
