@@ -17,7 +17,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="style.css?v=16">
   <link rel="stylesheet" href="theme.css?v=2">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png?v=2">
@@ -362,10 +362,16 @@
           <div class="schedule-container" id="scheduleContainer"></div>
         </section>
 
-        <!-- Catalog View -->
+        <!-- My List View -->
         <section class="view" id="catalogView">
           <div class="view-header">
             <h1 class="view-title">My List</h1>
+          </div>
+          <div class="list-tabs" id="listTabs">
+            <button class="list-tab active" data-filter="all">All</button>
+            <button class="list-tab" data-filter="movie">Movies</button>
+            <button class="list-tab" data-filter="tv">TV Shows</button>
+            <button class="list-tab" data-filter="anime">Anime</button>
           </div>
           <div class="content-grid" id="catalogGrid"></div>
         </section>
@@ -546,7 +552,7 @@
               <div class="setting-item">
                 <div class="setting-info">
                   <span class="setting-label">Export Data</span>
-                  <span class="setting-description">Download your catalog and settings as JSON</span>
+                  <span class="setting-description">Download your list and settings as JSON</span>
                 </div>
                 <button class="btn btn-secondary" id="exportDataBtn">Export</button>
               </div>
@@ -555,7 +561,7 @@
             <div class="settings-section">
               <h2 class="settings-title">About</h2>
               <div class="about-info">
-                <p>Alluva v1.1.0</p>
+                <p>Alluva v1.1.1</p>
                 <p>A self-hosted personal media hub inspired by Jellyfin</p>
                 <p>Built with Express.js, AniList, TMDB, and Torznab indexers</p>
               </div>
@@ -593,7 +599,7 @@
             <div class="detail-content" id="detailContent"></div>
             <!-- Detail Footer -->
             <footer class="app-footer detail-footer">
-              <span class="footer-left">&copy; DTEmpire (DargoTamber) | v1.1.0</span>
+              <span class="footer-left">&copy; DTEmpire (DargoTamber) | v1.1.1</span>
               <button class="footer-about-btn" onclick="document.getElementById('aboutOverlay').classList.add('open')">About</button>
               <div class="footer-right">
                 <a href="#/home" style="display:flex;align-items:center;" title="Alluva Home"><img src="icons/favicon-32x32.png" alt="Alluva" style="height:24px;width:24px;border-radius:4px;"></a>
@@ -607,49 +613,6 @@
         </section>
 
         <!-- Add to Catalog Modal -->
-        <div class="modal-overlay" id="catalogModal" style="display: none;">
-          <div class="modal catalog-modal">
-            <div class="modal-header">
-              <h3>Add to Catalog</h3>
-              <button class="modal-close" id="catalogModalClose" aria-label="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            <form class="catalog-form" id="catalogForm">
-              <input type="hidden" id="catalogItemType">
-              <input type="hidden" id="catalogItemId">
-              <div class="form-group">
-                <label for="catalogTitle">Title</label>
-                <input type="text" id="catalogTitle" required>
-              </div>
-              <div class="form-group">
-                <label for="catalogPoster">Poster URL</label>
-                <input type="url" id="catalogPoster">
-              </div>
-              <div class="form-group">
-                <label for="catalogUrl">Stream URL / Magnet Link</label>
-                <input type="text" id="catalogUrl" required>
-              </div>
-              <div class="form-group">
-                <label for="catalogType">Type</label>
-                <select id="catalogType" required>
-                  <option value="anime">Anime</option>
-                  <option value="movie">Movie</option>
-                  <option value="tv">TV Show</option>
-                  <option value="direct">Direct Link</option>
-                </select>
-              </div>
-              <div class="form-actions">
-                <button type="button" class="btn btn-secondary" id="catalogCancel">Cancel</button>
-                <button type="submit" class="btn btn-primary">Add to Catalog</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
         <!-- Auth Modal -->
         <div class="modal-overlay" id="authModalOverlay" style="display: none;">
           <div class="modal">
@@ -706,7 +669,7 @@
       </div>
 
       <footer class="app-footer">
-        <span class="footer-left">&copy; DTEmpire (DargoTamber) | v1.1.0</span>
+        <span class="footer-left">&copy; DTEmpire (DargoTamber) | v1.1.1</span>
         <button id="aboutBtn" class="footer-about-btn">About</button>
         <div class="footer-right">
           <a href="#/home" style="display:flex;align-items:center;" title="Alluva Home"><img src="icons/favicon-32x32.png" alt="Alluva" style="height:24px;width:24px;border-radius:4px;"></a>
@@ -721,7 +684,7 @@
 
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <script src="https://content.jwplatform.com/libraries/KB5zFt7A.js"></script>
-  <script src="app.js?v=28"></script>
+  <script src="app.js?v=40"></script>
   <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }</script>
 </body>
 

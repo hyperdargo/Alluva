@@ -1,5 +1,5 @@
 const CACHE = 'sv-cache-v1';
-const urls = ['/', '/index.html', '/style.css', '/theme.css', '/app.js', '/manifest.json', '/favicon.svg', '/icons/icon-192.svg', '/icons/icon-512.svg'];
+const urls = ['/', '/index.html', '/style.css', '/theme.css', '/app.js', '/manifest.json', '/favicon.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(urls)));

@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
-  <a href="package.json"><img src="https://img.shields.io/badge/Version-1.1.0-success.svg" alt="Version"></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/Version-1.1.1-success.svg" alt="Version"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-16%2B-green.svg" alt="Node.js"></a>
   <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg" alt="Status">
 </p>

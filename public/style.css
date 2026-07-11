@@ -1048,6 +1048,36 @@ ul, ol {
   color: var(--color-text-primary);
 }
 
+.list-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.list-tab {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.list-tab:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--color-text-primary);
+}
+
+.list-tab.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
 .view-filters {
   display: flex;
   align-items: center;
@@ -3594,3 +3624,4 @@ body.view-home    { --color-accent-primary: #f59e0b; --color-accent-primary-hove
 body.view-movies  { --color-accent-primary: #dc2626; --color-accent-primary-hover: #b91c1c; --color-accent-primary-light: rgba(220,38,38,0.2); }
 body.view-tv      { --color-accent-primary: #0d9488; --color-accent-primary-hover: #0f766e; --color-accent-primary-light: rgba(13,148,136,0.2); }
 body.view-anime   { --color-accent-primary: #7c3aed; --color-accent-primary-hover: #6d28d9; --color-accent-primary-light: rgba(124,58,237,0.2); }
+body.view-catalog { --color-accent-primary: #3b82f6; --color-accent-primary-hover: #60a5fa; --color-accent-primary-light: rgba(59,130,246,0.2); }

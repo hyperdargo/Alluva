@@ -6,3 +6,9 @@ services:
       - "3000:3000"
     env_file: .env
     restart: unless-stopped
+    volumes:
+      - alluva_data:/app/data
+      - ./suggestions.json:/app/suggestions.json
+
+volumes:
+  alluva_data:

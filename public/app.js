@@ -509,16 +509,11 @@ function applyTheme(theme) {
 
 function applyAccent(accent) {
   const root = document.documentElement;
+  root.removeAttribute('style');
   if (accent === 'purple') {
-    root.style.setProperty('--color-accent-primary', '#8b5cf6');
-    root.style.setProperty('--color-accent-primary-hover', '#a78bfa');
-    root.style.setProperty('--color-accent-primary-light', 'rgba(139, 92, 246, 0.2)');
     root.style.setProperty('--color-border-focus', '#8b5cf6');
     root.style.setProperty('--shadow-glow', '0 0 24px rgba(139, 92, 246, 0.15)');
   } else {
-    root.style.setProperty('--color-accent-primary', '#3b82f6');
-    root.style.setProperty('--color-accent-primary-hover', '#60a5fa');
-    root.style.setProperty('--color-accent-primary-light', 'rgba(59, 130, 246, 0.2)');
     root.style.setProperty('--color-border-focus', '#3b82f6');
     root.style.setProperty('--shadow-glow', '0 0 24px rgba(59, 130, 246, 0.15)');
   }
@@ -673,14 +668,30 @@ function navigateTo(viewId, extraData = null) {
   const suggestions = document.getElementById('searchSuggestions');
   if (suggestions) suggestions.classList.remove('active');
 
-  // Trigger content loading
+  // Trigger content loading — reset language filters on navigation (not on manual filter change)
   switch (viewId) {
     case 'home': loadHomeView(); break;
     case 'anime': loadAnimeView(); break;
-    case 'movies': loadMoviesView(); break;
-    case 'tv': loadTVView(); break;
+    case 'movies':
+      if (state.pillPreset && state.pillPreset.view === 'movies') {
+        if (state.pillPreset.language) document.getElementById('movieLanguageFilter').value = state.pillPreset.language;
+        state.pillPreset = null;
+      } else {
+        document.getElementById('movieLanguageFilter').value = '';
+      }
+      loadMoviesView();
+      break;
+    case 'tv':
+      if (state.pillPreset && state.pillPreset.view === 'tv') {
+        if (state.pillPreset.language) document.getElementById('tvLanguageFilter').value = state.pillPreset.language;
+        state.pillPreset = null;
+      } else {
+        document.getElementById('tvLanguageFilter').value = '';
+      }
+      loadTVView();
+      break;
     case 'schedule': loadScheduleView(); break;
-    case 'catalog': loadCatalogView(); break;
+    case 'catalog': loadMyListView(); break;
     case 'settings': loadSettingsView(); break;
     case 'search': loadSearchView(extraData); break;
     case 'suggestions': loadSuggestionsView(); break;
@@ -966,7 +977,7 @@ function createMediaCard(item, type) {
   } else if (type === 'catalog') {
     id = item.id;
     title = item.title;
-    rating = 'HTTP';
+    rating = item.type === 'movie' ? '🎬 Movie' : item.type === 'tv' ? '📺 TV' : item.type === 'anime' ? '🎌 Anime' : '🔗 Direct';
     poster = getPosterUrl(item.poster);
   }
 
@@ -1383,13 +1394,6 @@ async function loadMoviesView(page = 1) {
 
   const year = document.getElementById('movieYearFilter').value;
   const genre = document.getElementById('movieGenreFilter').value;
-  // Apply pill preset for Bollywood → Hindi
-  if (page === 1 && state.pillPreset && state.pillPreset.view === 'movies') {
-    if (state.pillPreset.language) {
-      document.getElementById('movieLanguageFilter').value = state.pillPreset.language;
-    }
-    state.pillPreset = null;
-  }
 
   const language = document.getElementById('movieLanguageFilter')?.value || '';
 
@@ -1470,12 +1474,6 @@ async function loadTVView(page = 1) {
 
   const year = document.getElementById('tvYearFilter').value;
   const genre = document.getElementById('tvGenreFilter').value;
-  if (page === 1 && state.pillPreset && state.pillPreset.view === 'tv') {
-    if (state.pillPreset.language) {
-      document.getElementById('tvLanguageFilter').value = state.pillPreset.language;
-    }
-    state.pillPreset = null;
-  }
 
   const language = document.getElementById('tvLanguageFilter')?.value || '';
 
@@ -1671,68 +1669,83 @@ function renderScheduleCalendar(schedule, timezone) {
   });
 }
 
-async function loadCatalogView() {
+async function loadMyListView() {
   const grid = document.getElementById('catalogGrid');
   grid.innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
 
   try {
     const endpoint = state.auth.token ? '/api/user/catalog' : '/api/catalog';
     const res = await fetchWithAuth(endpoint);
-    const catalog = await res.json();
+    const items = await res.json();
+    state.catalog = items;
 
     grid.innerHTML = '';
-    if (catalog.length === 0) {
+    if (items.length === 0) {
       grid.innerHTML = `
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="16"></line>
-            <line x1="8" y1="12" x2="16" y2="12"></line>
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
           </svg>
-          <h3>Your Catalog is Empty</h3>
-          <p>Add custom streams, magnets, or direct URLs by clicking the "+" button in the top bar.</p>
+          <h3>Your List is Empty</h3>
+          <p>Browse movies, TV shows, and anime and tap "Add to My List" to save them here.</p>
         </div>
       `;
       return;
     }
 
-    catalog.forEach(item => {
-      const card = createMediaCard(item, 'catalog');
-
-      const actions = document.createElement('div');
-      actions.className = 'media-actions';
-      actions.innerHTML = `
-        <button class="media-action-btn delete-btn" title="Remove from catalog">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </button>
-      `;
-
-      actions.querySelector('.delete-btn').addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (confirm(`Remove "${item.title}" from your catalog?`)) {
-          setLoading(true);
-          try {
-            const endpoint = state.auth.token ? `/api/user/catalog/${item.id}` : `/api/catalog/${item.id}`;
-            await fetchWithAuth(endpoint, { method: 'DELETE' });
-            showToast('Item removed from catalog', 'success');
-            loadCatalogView();
-          } catch (err) {
-            showToast('Failed to remove item', 'error');
-          } finally {
-            setLoading(false);
+    const renderItems = (filter) => {
+      grid.innerHTML = '';
+      const filtered = filter === 'all' ? items : items.filter(i => (i.type || '') === filter);
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><h3>No ${filter === 'all' ? '' : filter + ' '}items saved yet</h3></div>`;
+        return;
+      }
+      filtered.forEach(item => {
+        const card = createMediaCard(item, 'catalog');
+        const actions = document.createElement('div');
+        actions.className = 'media-actions';
+        actions.innerHTML = `
+          <button class="media-action-btn delete-btn" title="Remove from list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        `;
+        actions.querySelector('.delete-btn').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (confirm(`Remove "${item.title}" from your list?`)) {
+            setLoading(true);
+            try {
+              const endpoint = state.auth.token ? `/api/user/catalog/${item.id}` : `/api/catalog/${item.id}`;
+              await fetchWithAuth(endpoint, { method: 'DELETE' });
+              showToast('Item removed', 'success');
+              renderItems(filter);
+            } catch (err) {
+              showToast('Failed to remove item', 'error');
+            } finally {
+              setLoading(false);
+            }
           }
-        }
+        });
+        card.appendChild(actions);
+        grid.appendChild(card);
       });
+    };
 
-      card.appendChild(actions);
-      grid.appendChild(card);
+    // Setup tabs
+    const tabs = document.querySelectorAll('.list-tab');
+    tabs.forEach(tab => {
+      tab.onclick = () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderItems(tab.dataset.filter);
+      };
     });
+    renderItems('all');
 
   } catch (err) {
-    grid.innerHTML = '<div class="error-state"><h3>Failed to load catalog</h3><p>Could not connect to service.</p></div>';
+    grid.innerHTML = '<div class="error-state"><h3>Failed to load list</h3><p>Could not connect to service.</p></div>';
   }
 }
 
@@ -2207,10 +2220,22 @@ async function launchDirectPlayer(server, type, seasonNum = 1, epNum = 1) {
     const multiType = imdbId ? 'video_id' : 'tmdb';
     if (type === 'movie') url = `https://multiembed.mov/?${multiType}=${id}&type=dub`;
     else url = `https://multiembed.mov/?${multiType}=${id}&s=${seasonNum}&e=${epNum}&type=dub`;
-  } else if (server === '2embed') {
-    const id = imdbId || targetId;
-    if (type === 'movie') url = `https://www.2embed.cc/embed/${id}`;
-    else url = `https://www.2embed.cc/embed/${id}&s=${seasonNum}&e=${epNum}`;
+  } else if (server === 'vsembed_su') {
+    if (type === 'movie') url = `https://vsembed.su/embed/movie/${targetId}`;
+    else url = `https://vsembed.su/embed/tv/${targetId}/${seasonNum}/${epNum}`;
+  } else if (server === 'vsembed_ru') {
+    if (type === 'movie') url = `https://vsembed.ru/embed/movie/${targetId}`;
+    else url = `https://vsembed.ru/embed/tv/${targetId}/${seasonNum}/${epNum}`;
+  } else if (server === '1embed') {
+    if (type === 'movie') url = `https://1embed.cc/embed/movie/${targetId}`;
+    else url = `https://1embed.cc/embed/tv/${targetId}/${seasonNum}/${epNum}`;
+  } else if (server === 'embedmaster') {
+    if (type === 'movie') url = `https://embedmaster.link/movie/${targetId}`;
+    else url = `https://embedmaster.link/tv/${targetId}/${seasonNum}/${epNum}`;
+  } else if (server === 'vidsrc') {
+    const id = targetIdType === 'imdb' ? imdbId : targetId; 
+    if (type === 'movie') url = `https://vidsrcme.ru/embed/movie?${targetIdType}=${id}`;
+    else url = `https://vidsrcme.ru/embed/tv?${targetIdType}=${id}&season=${seasonNum}&episode=${epNum}`;
   } else if (server === 'autoembed') {
     const id = imdbId || targetId;
     if (type === 'movie') url = `https://autoembed.cc/embed/movie/${id}`;
@@ -2455,29 +2480,73 @@ async function renderDetails(container, details, type) {
 
   const catalogBtn = document.createElement('button');
   catalogBtn.className = 'detail-action-btn secondary';
-  catalogBtn.innerHTML = '➕ Add to My List';
-  catalogBtn.addEventListener('click', async () => {
-    setLoading(true);
-    try {
-      const endpoint = state.auth.token ? '/api/user/catalog' : '/api/catalog';
-      await fetchWithAuth(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          title: title, 
-          poster: poster, 
-          url: '', 
-          type: type, 
-          mediaId: details.id
-        })
-      });
-      showToast(`Added "${title}" to your List!`, 'success');
-    } catch (err) {
-      showToast('Failed to add item to list.', 'error');
-    } finally {
-      setLoading(false);
+  catalogBtn.innerHTML = '⏳ Loading...';
+
+  const checkCatalog = () => {
+    if (!state.catalog) return null;
+    return state.catalog.find(c => String(c.mediaId) === String(details.id) && c.type === type);
+  };
+
+  const updateCatalogBtn = () => {
+    const existing = checkCatalog();
+    if (existing) {
+      catalogBtn.innerHTML = '➖ Remove from My List';
+      catalogBtn.onclick = async () => {
+        setLoading(true);
+        try {
+          const endpoint = state.auth.token ? `/api/user/catalog/${existing.id}` : `/api/catalog/${existing.id}`;
+          await fetchWithAuth(endpoint, { method: 'DELETE' });
+          if (state.catalog) state.catalog = state.catalog.filter(c => c.id !== existing.id);
+          showToast(`Removed "${title}" from your List.`, 'success');
+          updateCatalogBtn();
+        } catch (err) {
+          showToast('Failed to remove item.', 'error');
+        } finally {
+          setLoading(false);
+        }
+      };
+    } else {
+      catalogBtn.innerHTML = '➕ Add to My List';
+      catalogBtn.onclick = async () => {
+        setLoading(true);
+        try {
+          const endpoint = state.auth.token ? '/api/user/catalog' : '/api/catalog';
+          await fetchWithAuth(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              title: title, 
+              poster: poster, 
+              url: '', 
+              type: type, 
+              mediaId: details.id
+            })
+          });
+          showToast(`Added "${title}" to your List!`, 'success');
+          state.catalog = await fetchWithAuth(endpoint).then(r => r.json());
+          updateCatalogBtn();
+        } catch (err) {
+          showToast('Failed to add item to list.', 'error');
+        } finally {
+          setLoading(false);
+        }
+      };
     }
-  });
+  };
+
+  (async () => {
+    if (!state.catalog) {
+      try {
+        const endpoint = state.auth.token ? '/api/user/catalog' : '/api/catalog';
+        const res = await fetchWithAuth(endpoint);
+        state.catalog = await res.json();
+      } catch (e) {
+        state.catalog = [];
+      }
+    }
+    updateCatalogBtn();
+  })();
+
   headerActions.appendChild(catalogBtn);
 
   const watchRecord = state.continueWatching.find(item => item.id == details.id && item.type == type);
@@ -2533,7 +2602,6 @@ async function renderDetails(container, details, type) {
   const isAnime = type === 'anime' || (details.original_language === 'ja' && details.genres?.some(g => g.name === 'Animation'));
   
   if (type === 'movie' || type === 'tv') {
-    // Render Sub/Dub server rows for Movies/TV (aniwave-style)
     serverGroup.className = 'aniwave-server-container';
     serverGroup.style.display = 'flex';
     serverGroup.innerHTML = '';
@@ -2541,12 +2609,14 @@ async function renderDetails(container, details, type) {
     const subServers = [
       { name: 'VidSrc', id: 'vidsrc' },
       { name: 'Smashy', id: 'smashy' },
-      { name: 'VidLink', id: 'vidlink' },
-      { name: '2Embed', id: '2embed' },
-      { name: 'Multi', id: 'multiembed' }
+      { name: 'EmbedMaster', id: 'embedmaster' },
+      { name: 'Multi', id: 'multiembed' },
+      { name: '1Embed', id: '1embed' },
+      { name: 'VSembed.su', id: 'vsembed_su' },
+      { name: 'VSembed.ru', id: 'vsembed_ru' },
     ];
 
-    const createServerRow = (servers, label, icon, lang) => {
+    const createServerRow = (servers, label, icon) => {
       const row = document.createElement('div');
       row.className = 'aniwave-server-row';
       const labelDiv = document.createElement('div');
@@ -2575,9 +2645,8 @@ async function renderDetails(container, details, type) {
       serverGroup.appendChild(row);
     };
 
-    createServerRow(subServers, 'Servers', '▶', 'sub');
+    createServerRow(subServers, 'Servers', '▶');
 
-    // Auto-click first SUB server
     const firstBtn = serverGroup.querySelector('.aniwave-server-btn');
     if (firstBtn) firstBtn.click();
   } else {
@@ -2597,11 +2666,6 @@ async function renderDetails(container, details, type) {
       triggerTorrentSearch(title, 'movie');
     });
 
-    // Auto play movie on load (first SUB server already auto-clicked above)
-    setTimeout(() => {
-      triggerTorrentSearch(title, 'movie');
-    }, 150);
-
   } else if (type === 'anime') {
     document.getElementById('theaterLeft').style.display = 'flex';
     document.getElementById('theaterLeft').className = 'theater-left aniwave-ep-container';
@@ -2614,7 +2678,16 @@ async function renderDetails(container, details, type) {
     
     const grid = document.getElementById('theaterEpisodesGrid');
     grid.className = 'aniwave-ep-grid';
-    const totalEpisodes = details.episodes || 1;
+    let totalEpisodes = details.episodes;
+    if (!totalEpisodes) {
+      try {
+        const epRes = await fetch(`/api/episodes/flat?tmdbId=${details.id_mal ? '' : ''}&malId=${details.id}`);
+        const epData = await epRes.json();
+        if (epData.episodes) totalEpisodes = epData.episodes.length;
+      } catch (e) {}
+      if (!totalEpisodes) totalEpisodes = details.nextAiringEpisode?.episode ? details.nextAiringEpisode.episode - 1 : 1;
+      if (!totalEpisodes || totalEpisodes < 1) totalEpisodes = 1;
+    }
     
     const chunkSize = 100;
     const numChunks = Math.ceil(totalEpisodes / chunkSize);
@@ -2730,25 +2803,20 @@ async function renderDetails(container, details, type) {
     grid.className = 'aniwave-ep-grid';
 
     const renderTvEpisodes = async (seasonNum) => {
+      const targetSeason = seasonNum || state.selectedMedia.selectedSeason || 1;
       grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px;"><div class="spinner"></div></div>';
       try {
-        const res = await fetch(`/api/media/tv/${details.id}/season/${seasonNum}`);
-        const seasonData = await res.json();
+        const res = await fetch(`/api/episodes/flat?tmdbId=${details.id}&season=${targetSeason}`);
+        const episodeData = await res.json();
         grid.innerHTML = '';
-        if (seasonData.episodes) {
-          const firstEp = seasonData.episodes[0];
-          if (firstEp && state.selectedMedia.selectedEpisode === firstEp.episode_number) {
-            document.getElementById('episodeSubtitle').textContent = firstEp.name ? `Episode ${firstEp.episode_number} - ${firstEp.name}` : `Episode ${firstEp.episode_number}`;
-          }
-          seasonData.episodes.forEach(ep => {
+        if (episodeData.episodes && episodeData.episodes.length > 0) {
+          episodeData.episodes.forEach(ep => {
             const btn = document.createElement('div');
             btn.className = 'aniwave-ep-btn';
-            if (state.selectedMedia.selectedEpisode === ep.episode_number) btn.classList.add('active');
-            const isUpcoming = ep.air_date && new Date(ep.air_date) > new Date();
+            if (state.selectedMedia.selectedEpisode === ep.episode_number && state.selectedMedia.selectedSeason === targetSeason) btn.classList.add('active');
             btn.textContent = ep.episode_number;
-            btn.title = isUpcoming ? `Episode ${ep.episode_number} - Coming ${ep.air_date}` : (ep.name || `Episode ${ep.episode_number}`);
-            if (isUpcoming) btn.classList.add('upcoming');
-            const wRec = state.continueWatching.find(w => w.id == details.id && w.type == 'tv' && w.episodeNumber == ep.episode_number && w.seasonNumber == seasonNum);
+            btn.title = ep.name || `Episode ${ep.episode_number}`;
+            const wRec = state.continueWatching.find(w => w.id == details.id && w.type == 'tv' && w.seasonNumber == targetSeason && w.episodeNumber == ep.episode_number);
             if (wRec) {
               const dot = document.createElement('span');
               dot.className = 'watched-dot';
@@ -2757,41 +2825,43 @@ async function renderDetails(container, details, type) {
             }
 
             btn.addEventListener('click', () => {
-              if (isUpcoming) {
-                showToast(`Episode ${ep.episode_number} airs on ${ep.air_date}`, 'info');
-                return;
-              }
               document.querySelectorAll('.aniwave-ep-btn').forEach(c => c.classList.remove('active'));
               btn.classList.add('active');
               state.selectedMedia.selectedEpisode = ep.episode_number;
+              state.selectedMedia.selectedSeason = targetSeason;
               document.getElementById('episodeSubtitle').textContent = ep.name ? `Episode ${ep.episode_number} - ${ep.name}` : `Episode ${ep.episode_number}`;
 
               if (state.activeStreamTab === 'direct') {
                 const activeServer = document.querySelector('.aniwave-server-btn.active')?.dataset?.server || 'vidsrc';
-                launchDirectPlayer(activeServer, 'tv', seasonNum, ep.episode_number);
+                launchDirectPlayer(activeServer, 'tv', targetSeason, ep.episode_number);
               } else {
                 const pad = (n) => String(n).padStart(2, '0');
-                const tvQuery = `${title} S${pad(seasonNum)}E${pad(ep.episode_number)}`;
-                triggerTorrentSearch(tvQuery, 'tv', ep.episode_number, seasonNum);
+                const tvQuery = `${title} S${pad(targetSeason)}E${pad(ep.episode_number)}`;
+                triggerTorrentSearch(tvQuery, 'tv', ep.episode_number, targetSeason);
               }
             });
             grid.appendChild(btn);
           });
+        } else {
+          grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:20px; color:var(--color-text-muted);">No episodes available.</p>';
         }
       } catch (e) {
         grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:20px; color:var(--color-text-muted);">Failed to load episodes.</p>';
       }
     };
 
-    seasonSelect.addEventListener('change', (e) => {
-      state.selectedMedia.selectedSeason = parseInt(e.target.value);
-      renderTvEpisodes(parseInt(e.target.value));
+    seasonSelect.addEventListener('change', () => {
+      const newSeason = parseInt(seasonSelect.value);
+      state.selectedMedia.selectedSeason = newSeason;
+      state.selectedMedia.selectedEpisode = 1;
+      renderTvEpisodes(newSeason);
     });
 
     if (seasons.length > 0) {
-      const initialSeason = seasons[0].season_number === 0 ? (seasons[1]?.season_number || 0) : seasons[0].season_number;
+      const initialSeason = seasons[0].season_number === 0 ? (seasons[1]?.season_number || 1) : seasons[0].season_number;
       seasonSelect.value = initialSeason;
       state.selectedMedia.selectedSeason = initialSeason;
+      state.selectedMedia.selectedEpisode = 1;
       renderTvEpisodes(initialSeason);
     }
 
@@ -3142,7 +3212,6 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
     const selectedIndexers = indexersToUse.join(',');
     
     let finalQuery = query;
-    let isHindiSearch = false;
     if (categoryType === 'anime') {
       const audioSelect = document.getElementById('animeAudioToggle');
       if (audioSelect) {
@@ -3150,12 +3219,7 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
         if (audioSelect.value === 'dub') finalQuery += ' Dub';
       }
     } else if (categoryType === 'movie' || categoryType === 'tv') {
-      const originalLang = state.selectedMedia?.details?.original_language;
-      // Auto-append Hindi for English or South Indian movies if not explicitly searched
-      if (!query.toLowerCase().includes('hindi') && (originalLang === 'en' || originalLang === 'te' || originalLang === 'ta' || originalLang === 'ml')) {
-          finalQuery += ' Hindi';
-          isHindiSearch = true;
-      }
+      // Just use the original query as-is
     }
 
     const stream = new EventSource(`/api/search/stream?q=${encodeURIComponent(finalQuery)}&indexers=${selectedIndexers}`);
@@ -3179,15 +3243,6 @@ async function triggerTorrentSearch(query, categoryType, episodeNum = null, seas
             return;
           }
           
-          if (isHindiSearch) {
-             grid.innerHTML = '<div class="spinner-container"><div class="spinner"></div><p style="margin-left: 12px;">No Hindi dubbed torrents found. Falling back to original language...</p></div>';
-             setTimeout(() => {
-               // Re-trigger search without appending Hindi
-               triggerTorrentSearch(query, categoryType, episodeNum, seasonNum);
-             }, 500);
-             return;
-          }
-
           grid.innerHTML = `<div class="empty-state"><h3>No Torrent Results</h3><p>Try searching for a different query or check settings to enable other torrent indexers.</p></div>`;
         }
         return;
@@ -3351,72 +3406,8 @@ function renderFilteredTorrents(torrentsList, selectedSource, categoryType, epis
 }
 
 // ==========================================================================
-// Catalog Modal
+// End of Catalog init
 // ==========================================================================
-
-function openCatalogModal(type = 'anime', mediaId = '', defaultTitle = '', defaultPoster = '') {
-  const modal = document.getElementById('catalogModal');
-  modal.style.display = 'flex';
-
-  document.getElementById('catalogItemType').value = type;
-  document.getElementById('catalogItemId').value = mediaId;
-  document.getElementById('catalogTitle').value = defaultTitle;
-  document.getElementById('catalogPoster').value = defaultPoster;
-  document.getElementById('catalogUrl').value = '';
-  document.getElementById('catalogType').value = ['anime', 'movie', 'tv', 'direct'].includes(type) ? type : 'direct';
-}
-
-function initCatalogModal() {
-  const modal = document.getElementById('catalogModal');
-  const form = document.getElementById('catalogForm');
-  const closeBtn = document.getElementById('catalogModalClose');
-  const cancelBtn = document.getElementById('catalogCancel');
-
-  const closeModal = () => {
-    modal.style.display = 'none';
-  };
-
-  closeBtn.onclick = closeModal;
-  cancelBtn.onclick = closeModal;
-
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const title = document.getElementById('catalogTitle').value;
-    const poster = document.getElementById('catalogPoster').value;
-    const url = document.getElementById('catalogUrl').value;
-    const type = document.getElementById('catalogType').value;
-
-    try {
-      const endpoint = state.auth.token ? '/api/user/catalog' : '/api/catalog';
-      const res = await fetchWithAuth(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, poster, url, type })
-      });
-      const data = await res.json();
-
-      showToast(`Added "${title}" to your Catalog!`, 'success');
-      closeModal();
-
-      if (state.currentView === 'catalog') {
-        loadCatalogView();
-      }
-    } catch (err) {
-      showToast('Failed to add item to catalog.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const topAddBtn = document.getElementById('catalogAddBtn');
-  if (topAddBtn) {
-    topAddBtn.onclick = () => {
-      openCatalogModal('direct', '', '', '');
-    };
-  }
-}
 
 function getResponsiveCount(basePerRow = 6) {
   const w = window.innerWidth;
@@ -4073,6 +4064,15 @@ function playStream(title, url, trackingInfo = {}) {
       captions: { active: true, update: true, language: 'auto' },
       controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen']
     });
+
+    const isM3u8 = url.includes('.m3u8');
+    if (isM3u8 && typeof Hls !== 'undefined' && Hls.isSupported()) {
+      const hls = new Hls({ enableWorker: true, lowLatencyMode: true, maxBufferLength: 30, maxMaxBufferLength: 600 });
+      hls.loadSource(url);
+      hls.attachMedia(videoEl);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => { videoEl.play().catch(e => console.log('Inline play prevented:', e)); });
+      hls.on(Hls.Events.ERROR, (event, data) => { if (data.fatal) { console.error('HLS fatal error:', data); showToast('HLS playback error', 'error'); } });
+    }
     
     if (trackingInfo.imdbId) {
       const fetchSubtitles = async () => {
@@ -4102,7 +4102,9 @@ function playStream(title, url, trackingInfo = {}) {
       fetchSubtitles();
     }
     
-    videoEl.src = url;
+    if (!isM3u8 || typeof Hls === 'undefined' || !Hls.isSupported()) {
+      videoEl.src = url;
+    }
     videoEl.addEventListener('loadedmetadata', () => {
       if (trackingInfo.currentTime) {
         videoEl.currentTime = trackingInfo.currentTime;
@@ -5000,7 +5002,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadUserData();
   initNavigation();
   initSearch();
-  initCatalogModal();
 
 
   // Drawer collapsible suggestion system

@@ -9,13 +9,48 @@ const http = require('http');
 const urlModule = require('url');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const NodeCache = require('node-cache');
+const Database = require('better-sqlite3');
+const episodeCache = new NodeCache({ stdTTL: 3600 });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_streamvault_key_123!';
-const USERS_FILE = './users.json';
 
-// Initialize users.json if it doesn't exist
-if (!fs.existsSync(USERS_FILE)) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify([]));
+// Database setup
+const DB_PATH = process.env.DB_PATH || pathModule.join(__dirname, 'data', 'alluva.db');
+const dbDir = pathModule.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+const db = new Database(DB_PATH);
+db.pragma('journal_mode = WAL');
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    username TEXT PRIMARY KEY,
+    password TEXT NOT NULL,
+    isAdmin INTEGER DEFAULT 0,
+    catalog TEXT DEFAULT '[]',
+    continueWatching TEXT DEFAULT '[]'
+  )
+`);
+
+// Migrate existing users.json data to SQLite
+const legacyFile = pathModule.join(__dirname, 'users.json');
+if (fs.existsSync(legacyFile)) {
+  try {
+    const legacy = JSON.parse(fs.readFileSync(legacyFile, 'utf8'));
+    if (Array.isArray(legacy) && legacy.length > 0) {
+      const count = db.prepare('SELECT COUNT(*) as c FROM users').get();
+      if (count.c === 0) {
+        saveUsers(legacy);
+        console.log(`Migrated ${legacy.length} users from users.json to SQLite`);
+      }
+    }
+    fs.renameSync(legacyFile, legacyFile + '.bak');
+    console.log('users.json renamed to users.json.bak');
+  } catch (e) {
+    console.error('Migration error:', e.message);
+  }
 }
 
 const app = express();
@@ -76,14 +111,35 @@ app.get('/api/fetch-test', async (req, res) => {
 
 function loadUsers() {
   try {
-    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+    const rows = db.prepare('SELECT * FROM users').all();
+    return rows.map(row => ({
+      username: row.username,
+      password: row.password,
+      isAdmin: row.isAdmin === 1,
+      catalog: JSON.parse(row.catalog || '[]'),
+      continueWatching: JSON.parse(row.continueWatching || '[]')
+    }));
   } catch (err) {
+    console.error('Database load error:', err.message);
     return [];
   }
 }
 
 function saveUsers(users) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  const upsert = db.prepare(`
+    INSERT OR REPLACE INTO users (username, password, isAdmin, catalog, continueWatching)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  const transaction = db.transaction((items) => {
+    for (const u of items) {
+      upsert.run(u.username, u.password, u.isAdmin ? 1 : 0, JSON.stringify(u.catalog || []), JSON.stringify(u.continueWatching || []));
+    }
+  });
+  try {
+    transaction(users);
+  } catch (err) {
+    console.error('Database save error:', err.message);
+  }
 }
 
 function authenticateToken(req, res, next) {
@@ -1764,6 +1820,10 @@ app.get('/api/media/tv/:id/season/:seasonNum', async (req, res) => {
 app.get('/api/episodes/flat', async (req, res) => {
   const tmdbId = parseInt(req.query.tmdbId);
   const malId = parseInt(req.query.malId);
+  const seasonFilter = parseInt(req.query.season); // optional: if set, return only that season
+  const cacheKey = `flat_ep_${tmdbId || ''}_${malId || ''}_${seasonFilter || ''}`;
+  const cached = episodeCache.get(cacheKey);
+  if (cached) return res.json(cached);
 
   // Try TMDB first
   if (tmdbId) {
@@ -1773,12 +1833,20 @@ app.get('/api/episodes/flat', async (req, res) => {
       );
       const detail = await detailRes.json();
       if (detail.seasons) {
-        const seasonNumbers = detail.seasons
+        let seasonNumbers = detail.seasons
           .filter(s => s.season_number > 0 && s.episode_count > 0)
           .sort((a, b) => a.season_number - b.season_number)
           .map(s => s.season_number);
 
-        const flatEpisodes = [];
+        // If a specific season is requested, only fetch that one
+        if (seasonFilter) {
+          if (!seasonNumbers.includes(seasonFilter)) {
+            return res.json({ episodes: [], source: 'tmdb', season: seasonFilter });
+          }
+          seasonNumbers = [seasonFilter];
+        }
+
+        const resultEpisodes = [];
         let flatNum = 1;
 
         for (const seasonNum of seasonNumbers) {
@@ -1788,17 +1856,21 @@ app.get('/api/episodes/flat', async (req, res) => {
           const seasonData = await epRes.json();
           if (seasonData.episodes) {
             for (const ep of seasonData.episodes) {
-              flatEpisodes.push({
-                episode_number: flatNum,
-                name: ep.name || `Episode ${ep.episode_number}`
+              resultEpisodes.push({
+                episode_number: seasonFilter ? ep.episode_number : flatNum,
+                name: ep.name || `Episode ${ep.episode_number}`,
+                season_number: seasonNum,
+                still_path: ep.still_path || null
               });
               flatNum++;
             }
           }
         }
 
-        if (flatEpisodes.length > 0) {
-          return res.json({ episodes: flatEpisodes, source: 'tmdb' });
+        if (resultEpisodes.length > 0) {
+          const result = { episodes: resultEpisodes, source: 'tmdb', season: seasonFilter || null };
+          episodeCache.set(cacheKey, result);
+          return res.json(result);
         }
       }
     } catch (e) {
@@ -1809,14 +1881,29 @@ app.get('/api/episodes/flat', async (req, res) => {
   // Fallback to MAL/Jikan
   if (malId) {
     try {
-      const epRes = await fetch(`https://api.jikan.moe/v4/anime/${malId}/episodes`);
-      const epData = await epRes.json();
-      if (epData.data && epData.data.length > 0) {
-        const flatEpisodes = epData.data.map((ep, i) => ({
+      let allEpisodes = [];
+      let page = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const epRes = await fetch(`https://api.jikan.moe/v4/anime/${malId}/episodes?page=${page}`);
+        const epData = await epRes.json();
+        if (epData.data && epData.data.length > 0) {
+          allEpisodes = allEpisodes.concat(epData.data);
+          page++;
+          if (!epData.pagination?.has_next_page) hasMore = false;
+        } else {
+          hasMore = false;
+        }
+        if (hasMore) await new Promise(r => setTimeout(r, 350));
+      }
+      if (allEpisodes.length > 0) {
+        const flatEpisodes = allEpisodes.map((ep, i) => ({
           episode_number: i + 1,
           name: ep.title || `Episode ${ep.mal_id}`
         }));
-        return res.json({ episodes: flatEpisodes, source: 'mal' });
+        const result = { episodes: flatEpisodes, source: 'mal' };
+        episodeCache.set(cacheKey, result);
+        return res.json(result);
       }
     } catch (e) {
       console.error('Jikan episodes error:', e.message);
@@ -1933,6 +2020,8 @@ app.post('/api/user/catalog', authenticateToken, (req, res) => {
   if (!user) return res.sendStatus(404);
   
   if (!user.catalog) user.catalog = [];
+  const existing = user.catalog.find(c => String(c.mediaId) === String(req.body.mediaId) && c.type === req.body.type);
+  if (existing) return res.json(existing);
   const item = { ...req.body, id: Date.now(), addedAt: new Date().toISOString() };
   user.catalog.push(item);
   saveUsers(users);
@@ -1982,6 +2071,8 @@ app.get('/api/catalog', (req, res) => {
 
 app.post('/api/catalog', (req, res) => {
   const catalog = loadCatalog();
+  const existing = catalog.find(c => String(c.mediaId) === String(req.body.mediaId) && c.type === req.body.type);
+  if (existing) return res.json(existing);
   const item = { ...req.body, id: Date.now(), addedAt: new Date().toISOString() };
   catalog.push(item);
   saveCatalog(catalog);
