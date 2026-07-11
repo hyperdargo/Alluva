@@ -5,6 +5,11 @@ catalog.json
 refactor.js
 refactor.py
 users.json
+users.json.bak
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/
 suggestions.json
 *.log
 .DS_Store

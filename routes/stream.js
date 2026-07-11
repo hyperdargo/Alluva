@@ -4,6 +4,10 @@ const cheerio = require('cheerio');
 const axios = require('axios');
 const NodeCache = require('node-cache');
 
+// Consumet providers (already installed)
+const { MOVIES } = require('@consumet/extensions');
+const goku = new MOVIES.Goku();
+
 const cache = new NodeCache({ stdTTL: 7 * 24 * 60 * 60 }); // 7 days
 
 const FLARESOLVERR_URL = process.env.FLARESOLVERR_URL || 'http://localhost:8191';
@@ -113,17 +117,26 @@ async function resolveAnime(title, episode) {
         if (data.link) {
             // Decrypt logic or proxy embed?
             // HiAnime returns an embed link, which usually requires Rapid-Cloud decryption.
-            // For now, we will return the embed link as HLS, but normally we'd decrypt it.
-            // Actually, we'll try to extract from the embed link.
+            // Try to extract m3u8 from embed HTML first
             const embedHtml = await fetchHtml(data.link);
             if (embedHtml) {
                 const m3u8Match = embedHtml.match(/"file":"([^"]+\\.m3u8)"/);
                 if (m3u8Match) {
                     return {
                         hls: m3u8Match[1],
-                        subtitles: [] // Extract subs similarly if needed
+                        subtitles: []
                     };
                 }
+            }
+            // RapidCloud decrypt fallback
+            if (data.link && data.link.includes('rapid-cloud')) {
+              const rapidUrl = data.link.replace('/e/', '/api/source/');
+              const rapidRes = await fetch(rapidUrl, { method: 'POST' });
+              const rapidData = await rapidRes.json();
+              if (rapidData.data?.length) {
+                const best = rapidData.data.sort((a, b) => (b.size || 0) - (a.size || 0))[0];
+                if (best?.file) return { hls: best.file, subtitles: [] };
+              }
             }
         }
     } catch(e) {}
@@ -216,11 +229,27 @@ router.get('/', async (req, res) => {
     let result = null;
     if (type === 'anime') {
         result = await resolveAnime(title, episode);
+        // Consumet Goku fallback for anime
+        if (!result || !result.hls || !result.hls.includes('.m3u8')) {
+          try {
+            const search = await goku.search(title);
+            if (search.results?.length) {
+              const info = await goku.fetchMediaInfo(search.results[0].id);
+              const ep = info.episodes?.find(e => e.number === Number(episode));
+              if (ep?.id) {
+                const sources = await goku.fetchEpisodeSources(ep.id);
+                if (sources.sources?.length) {
+                  result = { hls: sources.sources[0].url, subtitles: [] };
+                }
+              }
+            }
+          } catch(e) {}
+        }
     } else {
         result = await resolveMovieTv(title, year, season, episode);
     }
     
-    // Fallback Mock Data if Scrapers fail or return iframe links instead of raw m3u8
+    // Fallback Mock Data if Scrapers fail
     if (!result || !result.hls || !result.hls.includes('.m3u8')) {
         console.log('[Scraper] Failed to resolve native HLS. Using mock HLS for JW Player demo.');
         result = {
@@ -461,9 +490,27 @@ router.get('/anime/servers', async (req, res) => {
             console.log(`[Anikoto] No search results for: "${title}"`);
         }
         
-        // --- FALLBACK: TMDB-based embed providers ---
+        // --- CONSUMET: Goku (anime) ---
         if (servers.length === 0) {
-            console.log('[Fallback] Using TMDB-based embed providers');
+          try {
+            console.log('[Consumet] Searching Goku for:', title);
+            const search = await goku.search(title);
+            if (search.results?.length) {
+              const info = await goku.fetchMediaInfo(search.results[0].id);
+              const ep = info.episodes?.find(e => e.number === epNum);
+              if (ep?.id) {
+                const sources = await goku.fetchEpisodeSources(ep.id);
+                if (sources.sources?.length) {
+                  servers.push({ id: Buffer.from(sources.sources[0].url).toString('base64'), name: 'Goku', type: 'sub', source: 'consumet' });
+                }
+              }
+            }
+          } catch(e) { console.log('[Consumet] Goku error:', e.message); }
+        }
+        
+        // --- FALLBACK: Multi-source embed chain ---
+        if (servers.length === 0) {
+            console.log('[Fallback] Using multi-source embed chain');
             const TMDB_API_KEY = process.env.TMDB_API_KEY;
             let actualTmdbId = tmdbId;
             let s = 1, e = epNum;
@@ -496,14 +543,20 @@ router.get('/anime/servers', async (req, res) => {
                 }
             }
             
-            const pushServer = (name, url, type) => {
-                servers.push({ id: Buffer.from(url).toString('base64'), name, type, source: 'fallback' });
-            };
-            pushServer('Vidplay', `https://vidsrc.to/embed/tv/${actualTmdbId}/${s}/${e}`, 'sub');
-            pushServer('MyCloud', `https://embed.su/embed/tv/${actualTmdbId}/${s}/${e}`, 'sub');
-            pushServer('Filemoon', `https://vidlink.pro/tv/${actualTmdbId}/${s}/${e}`, 'sub');
-            pushServer('Vidplay', `https://vidlink.pro/tv/${actualTmdbId}/${s}/${e}?type=dub`, 'dub');
-            pushServer('MyCloud', `https://multiembed.mov/?tmdb=${actualTmdbId}&s=${s}&e=${e}&type=dub`, 'dub');
+            const EMBED_CHAIN = [
+              { name: 'Vidsrc', url: `https://vidsrcme.ru/embed/tv/${actualTmdbId}/${s}/${e}`, type: 'sub' },
+              { name: 'EmbedMaster', url: `https://embedmaster.link/tv/${actualTmdbId}/${s}/${e}`, type: 'sub' },
+              { name: 'MultiEmbed', url: `https://multiembed.mov/directstream.php?video_id=${actualTmdbId}&s=${s}&e=${e}`, type: 'sub' },
+              { name: '1Embed', url: `https://1embed.cc/embed/tv/${actualTmdbId}/${s}/${e}`, type: 'sub' },
+              { name: 'EzvidAPI', url: `https://ezvidapi.com/embed/tv/${actualTmdbId}/${s}/${e}`, type: 'sub' },
+              { name: 'EmbedAPI', url: `https://player.embed-api.stream/?id=${actualTmdbId}&s=${s}&e=${e}`, type: 'sub' },
+              { name: 'VidPop', url: `https://www.vidpop.xyz/embed/?id=${actualTmdbId}&season=${s}&episode=${e}`, type: 'sub' },
+              { name: 'EmbedAPI Dub', url: `https://player.embed-api.stream/?id=${actualTmdbId}&s=${s}&e=${e}&dub=1`, type: 'dub' },
+              { name: 'MultiEmbed Dub', url: `https://multiembed.mov/?tmdb=${actualTmdbId}&s=${s}&e=${e}&type=dub`, type: 'dub' },
+            ];
+            EMBED_CHAIN.forEach(ep => {
+              servers.push({ id: Buffer.from(ep.url).toString('base64'), name: ep.name, type: ep.type, source: 'embed' });
+            });
         }
         
         const result = { servers };
@@ -513,6 +566,37 @@ router.get('/anime/servers', async (req, res) => {
         console.error('Anime servers error:', err.message);
         res.status(500).json({ error: err.message });
     }
+});
+
+// --- MOVIE/TV SERVERS ENDPOINT ---
+router.get('/movie/servers', async (req, res) => {
+    const { title, year, season, episode, tmdbId, type } = req.query;
+    if (!title || !tmdbId) return res.status(400).json({ error: 'Missing title or tmdbId' });
+
+    const cacheKey = `movie_servers_v1:${title}:${year}:${season}:${episode}:${type}`;
+    if (cache.has(cacheKey)) return res.json(cache.get(cacheKey));
+
+    const isTv = type === 'tv';
+    const s = season || 1;
+    const e = episode || 1;
+
+    const embedSources = [
+      { name: 'Vidsrc', url: isTv ? `https://vidsrcme.ru/embed/tv/${tmdbId}/${s}/${e}` : `https://vidsrcme.ru/embed/movie/${tmdbId}` },
+      { name: 'Smashy', url: isTv ? `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}&season=${s}&episode=${e}` : `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}` },
+      { name: 'EmbedMaster', url: isTv ? `https://embedmaster.link/tv/${tmdbId}/${s}/${e}` : `https://embedmaster.link/movie/${tmdbId}` },
+      { name: 'MultiEmbed', url: isTv ? `https://multiembed.mov/directstream.php?video_id=${tmdbId}&s=${s}&e=${e}` : `https://multiembed.mov/directstream.php?video_id=${tmdbId}` },
+      { name: '1Embed', url: isTv ? `https://1embed.cc/embed/tv/${tmdbId}/${s}/${e}` : `https://1embed.cc/embed/movie/${tmdbId}` },
+      { name: 'EzvidAPI', url: isTv ? `https://ezvidapi.com/embed/tv/${tmdbId}/${s}/${e}` : `https://ezvidapi.com/embed/movie/${tmdbId}` },
+      { name: 'EmbedAPI', url: isTv ? `https://player.embed-api.stream/?id=${tmdbId}&s=${s}&e=${e}` : `https://player.embed-api.stream/?id=${tmdbId}` },
+      { name: 'VidPop', url: isTv ? `https://www.vidpop.xyz/embed/?id=${tmdbId}&season=${s}&episode=${e}` : `https://www.vidpop.xyz/embed/?id=${tmdbId}` },
+      { name: 'VSembed.su', url: isTv ? `https://vsembed.su/embed/tv/${tmdbId}/${s}/${e}` : `https://vsembed.su/embed/movie/${tmdbId}` },
+      { name: 'VSembed.ru', url: isTv ? `https://vsembed.ru/embed/tv/${tmdbId}/${s}/${e}` : `https://vsembed.ru/embed/movie/${tmdbId}` },
+    ];
+    const servers = embedSources.map(src => ({ id: Buffer.from(src.url).toString('base64'), name: src.name, type: 'embed' }));
+
+    const result = { servers };
+    cache.set(cacheKey, result);
+    res.json(result);
 });
 
 router.get('/anime/embed', async (req, res) => {
