@@ -187,5 +187,5 @@ Copyright (c) 2026 DTEmpire (DargoTamber)
 
 <p align="center">
   Made with ❤️ for the Media Streaming Community<br>
-  <strong>© DTEmpire (DargoTamber) | v1.1.0</strong>
+  <strong>© DTEmpire (DargoTamber) | v1.1.1</strong>
 </p>
